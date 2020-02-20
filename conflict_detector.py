@@ -252,7 +252,7 @@ def make_string(bipart, not_bipart):
 '''
 Compare the bipartitions
 '''
-def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff):
+def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff,relationship_list):
 	
 	all_names = []
 	test_bp1 = []
@@ -312,6 +312,8 @@ def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff):
 		if len(various_relationships) == 1:
 			j_info = various_relationships[0]
 			print "\n" + str(count) + " " + j_info[0] + "\t" + bp1_string + " " + str(i[1]) + " " + str(i[0]) + "    " + j_info[1] + " " + j_info[2] + " " + j_info[3]
+			#put relevant info into list or something
+			relationship_list.append([i,j_info[0]])
 		elif len(various_relationships) != 0:
 
 			num = 9900000000000000000009
@@ -324,13 +326,15 @@ def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff):
 				counter += 1
 			
 			print "\n" + str(count) + " " + j_info[0] + "\t" + bp1_string + " " + str(i[1]) + " " + str(i[0]) + "    " + j_info[1] + " " + j_info[2] + " " + j_info[3]
-			
+			#put into list or something
+			relationship_list.append([i, j_info[0]])
+
 		count += 1 
 		
 		
 
 
-'''OK: for each node, we want to look at everything either side of the bipart'''
+'''For each node, we want to look at everything either side of the bipart'''
 
 def quick_biparts(root, node_bipart):
 
@@ -402,8 +406,48 @@ def subtrees_function(root):
 
 	return whatever
 
+def tree_map(root, list):
+	'''replaces the labels of each node in a tree with 
+	the numbers of conflicts and concordances'''
 
+	#dictionary with unique entries, each corresponding to a bipart from the list
+	bipart_dict = {}
 
+	for i in list:
+		key = str(i[0][3:])
+		if key in bipart_dict.keys():
+			bipart_dict[key] += 1
+		else:
+			bipart_dict[key] = 1
+
+	#loop through dict adding each new label to each new node as we go along
+	for i in bipart_dict.keys():	
+		bipartition = i
+		species_tree = root
+
+		#label should be the number of concordances/conflicts
+		label = str(bipart_dict[i])
+		node_finder(species_tree, bipartition, label)
+
+def clear_labels(root):
+	for i in root.children:
+		if i.istip == False:
+			i.label = ''
+
+		clear_labels(i)
+
+def node_finder(root, bipartition, label):
+	for i in root.children:
+		if i.istip == False:
+			test_bipart = []
+			postorder3(i, test_bipart)
+			test_bipart = str(test_bipart) #bit of a hack but OK
+
+			if test_bipart == bipartition:
+				i.label = label
+				print i.label
+
+		node_finder(i, bipartition, label)
 
 
 if __name__ == "__main__":
@@ -433,14 +477,35 @@ if __name__ == "__main__":
 	total_array = []
 	tree2_biparts = postorder2(tree2, total_array, subtrees = False)
 	
-#	comp_biparts(tree1_biparts,tree2_biparts,name_array1,name_array2, sys.argv[2], cutoff)
+	#comp_biparts(tree1_biparts,tree2_biparts,name_array1,name_array2, sys.argv[2], cutoff)
 	
 	trees = subtrees_function(tree2)
-
-	#
+	
+	relationship_list = []
 	for i in trees:
 		total_array = []
 		i_biparts = postorder2(i, total_array, subtrees = True)
 		print "\n\nnew tree: " + str(i_biparts)
-		comp_biparts(tree1_biparts, i_biparts,name_array1, name_array2, sys.argv[2], cutoff)
+		comp_biparts(tree1_biparts, i_biparts,name_array1, name_array2, sys.argv[2], cutoff, relationship_list)
+	
+	
+	#make a list of concordances and a list of conflicts
+	concordances = []
+	conflicts = []
 
+	for i in relationship_list:
+		if i[1] == 'conflict':
+			conflicts.append(i)
+		elif i [1] == 'concordant':
+			concordances.append(i)
+	
+	#map concordances and conflicts back onto the tree
+	clear_labels(tree1)
+	tree_map(tree1, concordances)
+	concordance_tree = tree1.get_newick_repr()
+	print concordance_tree
+
+	clear_labels(tree1)
+	tree_map(tree1, conflicts)
+	conflict_tree = tree1.get_newick_repr()
+	print conflict_tree
