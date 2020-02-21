@@ -1,15 +1,14 @@
 '''
 Program to get tree length, concordance or whatever
 '''
-import sys
+import sys, os
 from node import Node
  
-#This takes in the newick and the
-#seq data then puts them in a data
-#structure that can be preorder or
-#postorder traversed pretty easily
 def build(instr):
-	#print "Entered build"
+	'''This takes in the newick and the seq data 
+	then puts them in a data structure that can 
+	be preorder or postorder traversed pretty easily'''
+
 	root = None
 	name_array =[]
 	index = 0
@@ -17,6 +16,7 @@ def build(instr):
 	begining = "Yep"
 	keepgoing = True
 	current_node = None
+	
 	#keeps going until the value becomes false
 	while keepgoing == True:
 		#This situation will only happen at the very beginning but
@@ -27,18 +27,21 @@ def build(instr):
 			root = Node()
 			current_node = root
 			begining = "No"
-		#This happens anytime their is an open bracket thats not the
+		
+		#This happens any time there is an open bracket that's not the
 		#beginning
 		elif nextchar == "(" and begining == "No":
 		
 			newnode = Node()
 			current_node.add_child(newnode)
 			current_node = newnode
+		
 		#This indicates that you are in a clade and tells the 
 		#program to move back one to grab the sister to the clade
 		elif nextchar == ',':
 		
 			current_node = current_node.parent
+		
 		#This says you are closing a clade and therefore it moves
 		#back to where the parent node is which allows the name
 		#to be added to the parent node
@@ -58,11 +61,13 @@ def build(instr):
 				nextchar = instr[index]
 			current_node.label = name
 			index -= 1
+		
 		#This indicates everything is done so keepgoing becomes false
 		elif nextchar == ';':
 		
 			keepgoing = False
 			break
+		
 		#This indicates you have branch lengths so it grabs the branch
 		#lengths turns them into floats and puts them in the current node
 		elif nextchar == ":":
@@ -77,12 +82,12 @@ def build(instr):
 				nextchar = instr[index]
 			current_node.length = float(branch)
 			index -= 1
+		
 		#This is for if anywhitespace exists
 		elif nextchar == ' ':
-		
 			pass #means the whitespace doesn't do anything weird
             	
-		#this is for if there are locus labels
+		#this is for if there are locus labels - for the gene trees
 		elif nextchar == '@':
 			while True:
 				if nextchar == ',' or nextchar == ')' or nextchar == ':' \
@@ -95,10 +100,9 @@ def build(instr):
 			current_node.locus = name
 			index -= 1
 				
-		
 		#This is for when any taxa name is hit, it will concatenate
 		#the taxa names together and add the name
-		else: # this is an external named node
+		else: #this is an external named node
 		
 			newnode = Node()
 			current_node.add_child(newnode)
@@ -118,24 +122,28 @@ def build(instr):
 			current_node.label = name
 			name_array.append(name)
 			index -= 1
+		
 		if index < len(instr) - 1:
 			index += 1
 		nextchar = instr[index]
 		name = ""
 		branch = ""
+	
 	return root,name_array
 
 
 def postorder3(root,bipart):
+	'''postorder traversal of tree from specified 
+	root making biparts'''
+	
 	for i in root.children:
 		if i.istip:
 			bipart.append(i.label)
 	
 		postorder3(i,bipart) #---> recursion
 
-def postorder2(root,total_array, subtrees):
-
-	cutoff = 0
+def postorder2(root,total_array, subtrees=False):
+	'''postorder traversal of whole tree'''
  	
 	if subtrees == True:
 		#all tips go into one bipartition
@@ -185,7 +193,7 @@ def postorder2(root,total_array, subtrees):
 			total_array.append(bipart)
 
 
-		postorder2(i,total_array, subtrees = False)  #---> recursion
+		postorder2(i,total_array)  #---> recursion
 	
 		
 	return total_array
@@ -193,6 +201,7 @@ def postorder2(root,total_array, subtrees):
 
 
 def unique_array(array,tree1,tree2):
+	
 	all_species = set()
 	for x in array:
 		all_species.add(x)
@@ -200,39 +209,41 @@ def unique_array(array,tree1,tree2):
 	mis2 = list(set(all_species) - set(tree2)) #the species that are in 1 but not 2
 	return mis1,mis2
 
-'''
-How do the biparts relate
-'''
+
 def bipart_properties(bp1,bp2):
 	
 	keepgoing = "false"
+	
 	#difference in the biparts
 	diff1 = list(set(bp1) - set(bp2))
 	diff2 = list(set(bp2) - set(bp1))
 
-	#print "bipart 1: " + str(bp1)
-	#print "bipart 2: " + str(bp2)
-	#print diff1
-	#print diff2
-	#check for no overlp
+	#check for if tip
 	if len(bp1) == 1 or len(bp2) == 1:
-		#print "uninformative"
+		
 		return "uninformative"
+
+	#check if nothing at all in common
 	elif len(diff1) == len(bp1):
-		#print "no comp"
+		
 		return "no_comp"
-	#check if nested
+
+	#check if concordant
 	elif len(bp1) == len(bp2) and len(diff1) == 0:
-		#print "identical"
+
 		return "concordant"
+	
+	#check if nested
 	elif len(diff1) == 0:
-		#print "nested in 2"
+
 		return "1 nested in 2"
 	elif len(diff2) == 0:
-		#print "nested in 1"
+
 		return "2 nested in 1"
+	
+	#if none of the above cases apply, conflict
 	else:
-		#print "conflict"
+
 		return "conflict"
 
 	
@@ -249,29 +260,24 @@ def make_string(bipart, not_bipart):
 
 	return str(name)
 
-'''
-Compare the bipartitions
-'''
+
 def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff,relationship_list):
-	
+	'''compares bipartitions'''
+
 	all_names = []
 	test_bp1 = []
 	test_bp2 = []
 	rel = 0
 	all_species = set()
 	outf = open(log_name + ".log", "w")
-	
-	'''
-	get names to know what can and can't be evaluated
-	'''
-
-	all_names = name_array1 + name_array2
-	# get the names, for missing taxa check etc.
-	mis1,mis2 = unique_array(all_names,name_array1,name_array2)
 	count = 0
+
+	#get names to know what can and can't be evaluated
+	all_names = name_array1 + name_array2
+	mis1,mis2 = unique_array(all_names,name_array1,name_array2)
+	
 	for i in tree1:
 		
-		#list for the things to go into
 		various_relationships = []	
 		lengths = []
 
@@ -284,14 +290,15 @@ def comp_biparts(tree1,tree2,name_array1,name_array2,log_name,cutoff,relationshi
 			test_bp2 = list(set(j[3:]) - set(mis1))
 			
 					
-			#the other side
+			#the other side of the bipart (sometimes nothing)
 			not_bp1 = i[2]
 			not_bp2 = j[2]
 
-			#make a string to print (just to make things look nicer)
+			#aesthetics
 			bp1_string = make_string(test_bp1, not_bp1)
 			bp2_string = make_string(test_bp2, not_bp2)
 			
+			#what 
 			rel = bipart_properties(test_bp1, test_bp2)
 
 			#compare them if bootstrap > cutoff
@@ -445,14 +452,13 @@ def node_finder(root, bipartition, label):
 
 			if test_bipart == bipartition:
 				i.label = label
-				print i.label
-
+				
 		node_finder(i, bipartition, label)
 
 
 if __name__ == "__main__":
 	if len(sys.argv) != 4:
-		print "python " + sys.argv[0] + " treefile1 treefile2 cutoff"
+		print "python " + sys.argv[0] + " species_tree folder_of_homologs cutoff"
 		sys.exit(0)
 	
 	tree1_biparts = []
@@ -461,51 +467,54 @@ if __name__ == "__main__":
 	name_array1 = []
 	name_array2 = []
 	cutoff = int(sys.argv[3])
+	concordances = []
+	conflicts = []
 
 	t1 = open(sys.argv[1],"r")
 	for i in t1:
 		n1 = i
 	tree1,name_array1 = build(n1)
-	#at this point we want to split the tree into subtrees?
+	tree1_biparts = postorder2(tree1, total_array)
 	
-	tree1_biparts = postorder2(tree1, total_array, subtrees = False)
+	#the homologs
+	homologs_folder = sys.argv[2]
+	file_list = os.listdir(sys.argv[2])
 	
-	t2 = open(sys.argv[2],"r")
-	for i in t2:
-		n2 = i
-	tree2,name_array2 = build(n2)
-	total_array = []
-	tree2_biparts = postorder2(tree2, total_array, subtrees = False)
-	
-	#comp_biparts(tree1_biparts,tree2_biparts,name_array1,name_array2, sys.argv[2], cutoff)
-	
-	trees = subtrees_function(tree2)
-	
-	relationship_list = []
-	for i in trees:
+	for i in file_list:
+		file_location = str(homologs_folder) + "/" + i
+		t2 = open(file_location, "r")
+		
+		for i in t2:
+			n2 = i
+		
+		tree2,name_array2 = build(n2)
 		total_array = []
-		i_biparts = postorder2(i, total_array, subtrees = True)
-		print "\n\nnew tree: " + str(i_biparts)
-		comp_biparts(tree1_biparts, i_biparts,name_array1, name_array2, sys.argv[2], cutoff, relationship_list)
+		tree2_biparts = postorder2(tree2, total_array)
+	
+		trees = subtrees_function(tree2)
+	
+		relationship_list = []
+		for i in trees:
+			total_array = []
+			i_biparts = postorder2(i, total_array, subtrees = True)
+			print "\n\nnew tree: " + str(i_biparts)
+			comp_biparts(tree1_biparts, i_biparts,name_array1, name_array2, sys.argv[2], cutoff, relationship_list)
 	
 	
-	#make a list of concordances and a list of conflicts
-	concordances = []
-	conflicts = []
-
-	for i in relationship_list:
-		if i[1] == 'conflict':
-			conflicts.append(i)
-		elif i [1] == 'concordant':
-			concordances.append(i)
+		for i in relationship_list:
+			if i[1] == 'conflict':
+				conflicts.append(i)
+			elif i [1] == 'concordant':
+				concordances.append(i)
 	
 	#map concordances and conflicts back onto the tree
+	print "\n"
 	clear_labels(tree1)
 	tree_map(tree1, concordances)
-	concordance_tree = tree1.get_newick_repr()
+	concordance_tree = tree1.get_newick_repr(showbl = True)
 	print concordance_tree
 
 	clear_labels(tree1)
 	tree_map(tree1, conflicts)
-	conflict_tree = tree1.get_newick_repr()
+	conflict_tree = tree1.get_newick_repr(showbl = True)
 	print conflict_tree
