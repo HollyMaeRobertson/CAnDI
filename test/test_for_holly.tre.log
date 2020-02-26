@@ -1,0 +1,22 @@
+no_comp: ['Beta', 'Spol']90 ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['Beta', 'Spol']90 ['NepSFB', 'Neam']100
+2 nested in 1: ['DrolusSFB', 'Dino', 'MJM3360', 'DrobinSFB', 'Neam', 'RuprSFB', 'Retr', 'MJM1652', 'NepSFB', 'WPYJ', 'MJM2940'] ['NepSFB', 'Neam', 'MJM2940']94
+2 nested in 1: ['DrolusSFB', 'Dino', 'MJM3360', 'DrobinSFB', 'Neam', 'RuprSFB', 'Retr', 'MJM1652', 'NepSFB', 'WPYJ', 'MJM2940'] ['NepSFB', 'Neam']100
+no_comp: ['Retr', 'WPYJ'] ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['Retr', 'WPYJ'] ['NepSFB', 'Neam']100
+2 nested in 1: ['DrolusSFB', 'Dino', 'MJM3360', 'DrobinSFB', 'Neam', 'RuprSFB', 'MJM1652', 'NepSFB', 'MJM2940'] ['NepSFB', 'Neam', 'MJM2940']94
+2 nested in 1: ['DrolusSFB', 'Dino', 'MJM3360', 'DrobinSFB', 'Neam', 'RuprSFB', 'MJM1652', 'NepSFB', 'MJM2940'] ['NepSFB', 'Neam']100
+no_comp: ['MJM3360', 'RuprSFB'] ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['MJM3360', 'RuprSFB'] ['NepSFB', 'Neam']100
+2 nested in 1: ['DrolusSFB', 'Dino', 'DrobinSFB', 'Neam', 'MJM1652', 'NepSFB', 'MJM2940'] ['NepSFB', 'Neam', 'MJM2940']94
+2 nested in 1: ['DrolusSFB', 'Dino', 'DrobinSFB', 'Neam', 'MJM1652', 'NepSFB', 'MJM2940'] ['NepSFB', 'Neam']100
+conflict: ['MJM2940', 'DrolusSFB'] ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['MJM2940', 'DrolusSFB'] ['NepSFB', 'Neam']100
+conflict: ['Dino', 'MJM1652', 'DrobinSFB', 'NepSFB', 'Neam'] ['NepSFB', 'Neam', 'MJM2940']94
+2 nested in 1: ['Dino', 'MJM1652', 'DrobinSFB', 'NepSFB', 'Neam'] ['NepSFB', 'Neam']100
+no_comp: ['Dino', 'MJM1652', 'DrobinSFB'] ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['Dino', 'MJM1652', 'DrobinSFB'] ['NepSFB', 'Neam']100
+no_comp: ['Dino', 'MJM1652'] ['NepSFB', 'Neam', 'MJM2940']94
+no_comp: ['Dino', 'MJM1652'] ['NepSFB', 'Neam']100
+1 nested in 2: ['NepSFB', 'Neam'] ['NepSFB', 'Neam', 'MJM2940']94
+concordant: ['NepSFB', 'Neam'] ['NepSFB', 'Neam']100
