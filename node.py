@@ -11,6 +11,7 @@ class Node:
 		self.height = 0
 		self.locus = ""
 
+
 	def add_child(self,child):
 		#make sure that the child is not already in there
 		assert child not in self.children
@@ -65,7 +66,7 @@ class Node:
 			else:
 				ret += ","
 		if self.label != None:
-			ret += self.label
+			ret += str(self.label)
 		if showbl == True:
 			ret += ":" + str(self.length)
 		return ret
