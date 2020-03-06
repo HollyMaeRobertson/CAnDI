@@ -141,7 +141,7 @@ def build(instr):
 		name = ""
 		branch = ""
 	
-	return root,name_array
+	return root, name_array
 
 
 def postorder3(root, bipart = None):
@@ -180,6 +180,8 @@ def postorder2(root, total_list = None, subtrees = False):
 		total_list = []
 
 	# When subtrees is True, we want to make an extra bipartition that encompasss the whole subtree
+	# aaaand we want that bipart to be assessed against slightly different criteria to the rest of the subtree?
+	# or can the critieria be the same they just have to include the next bipart up in the species list?
 	if subtrees == True:
 		bipart = []
 		other_side = [] # There is no other side as this is the whole tree
@@ -189,7 +191,7 @@ def postorder2(root, total_list = None, subtrees = False):
 		bipart.append(other_side)
 
 		bipart = postorder3(root, bipart)
-		
+
 		total_list.append(bipart)
 	
 		subtrees = False
@@ -312,6 +314,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 
 	# Getting missing taxa so we can exclude them
 	all_names = name_array1 + name_array2
+
 	mis1, mis2 = unique_array(all_names, name_array1, name_array2)
 	
 	# Comparing all the biparts pairwise
@@ -327,7 +330,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 		# The most downstream one *should* be the one that was added to the list last...
 
 		remaining_bps = [list(set(k[3:]) - set(mis2)) for k in tree1[count + 1:]]
-		
+	
 		# So if there is another identical bipart further on in the list, we ignore this one
 		if test_bp1 in remaining_bps:
 			count += 1
@@ -448,7 +451,7 @@ def subtrees_function(root, subtrees = None):
 	return subtrees		
 
 
-def label_duplications(root):
+def label_duplications(root, recursive = True):
 	'''Labels duplication nodes with "D"'''
 	if root.istip == False:
 		children = [i for i in root.children]
@@ -477,11 +480,11 @@ def label_duplications(root):
 
 		if duplication == "Yes":	
 			root.label = 'D'
+	if recursive == True:
+		for node in root.children:
+			label_duplications(node)
 
-	for node in root.children:
-		label_duplications(node)
-
-def tree_map(root, list):
+def tree_map(root, bipart_list):
 	'''This replaces the labels of each node in a species tree with 
 	the numbers of conflicts and concordances various gene trees show
 	at that node. Takes the root of the tree to be mapped onto and a 
@@ -495,7 +498,7 @@ def tree_map(root, list):
 	# there are in the list
 	bipart_dict = {}
 
-	for i in list:
+	for i in bipart_list:
 		key = str(i[0][3:])
 		if key in bipart_dict.keys():
 			bipart_dict[key] += 1
@@ -550,9 +553,10 @@ def change_tips_to_species(root):
 		change_tips_to_species(i)	
 
 
-def node_finder(root, bipartition, label):
+def node_finder(root, bipartition, label, first_time = True):
 	'''traverses tree and changes the label of the node with an identical bipartition 
 	to the one specified'''
+	
 	for i in root.children:
 		if i.istip == False:
 			test_bipart = postorder3(i)
@@ -561,7 +565,7 @@ def node_finder(root, bipartition, label):
 			if test_bipart == bipartition:
 				i.label = label
 				
-		node_finder(i, bipartition, label)
+		node_finder(i, bipartition, label, first_time = False)
 
 def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 	'''This function compares a subtree to 'tree1', which has already
@@ -570,10 +574,27 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 	conflicts = []
 	concordances = []
 	
-	name_array2 = postorder3(tree2)
-	tree2_biparts = postorder2(tree2, subtrees = True)
-	#print "\nNew Tree: " + str(tree2_biparts)
+	# name_array2 must also include the species from the next species up (even though 
+	# nothing should really be compared against them except for the subtree root)
+	keepgoing = True
+	current_node = tree2
 	
+	while True:
+		parent = current_node.parent
+		label_duplications(parent, recursive = False)
+		if parent.label == 'D':
+			current_node = parent
+		else:
+			for i in parent.children:
+				if i != current_node:
+					new_names = postorder3(i)
+			break
+	
+	name_array2 = postorder3(tree2)
+	name_array2.extend(new_names)
+
+	tree2_biparts = postorder2(tree2, subtrees = True)
+		
 	if mode == "normal":
 		relationships = comp_biparts(tree1_biparts, tree2_biparts, name_array1, name_array2, sys.argv[2], cutoff)
 	elif mode == "reverse":
@@ -586,7 +607,6 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 			concordances.append(relationship)
 
 	return conflicts, concordances
-
 
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
@@ -631,8 +651,15 @@ if __name__ == "__main__":
 				conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 				total_conflicts.extend(conflicts)
 				total_concordances.extend(concordances)
+			
+				rel_list = comp_biparts(tree1_biparts, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
 
-				
+				for rel in rel_list:
+					if rel[1] == 'conflict':
+						total_conflicts.append(rel)
+					elif rel[1] == 'concordant':
+						total_concordances.append(rel)
+
 		# Map concordances and conflicts back onto the tree using the lists
 		print "\n"
 		clear_labels(tree1)
@@ -676,6 +703,8 @@ if __name__ == "__main__":
 		change_tips_to_locus(tree2)
 		new_tree = tree2.get_newick_repr(showbl = True)
 		print new_tree + ";"
+		
+
 
 	else:
 		print "'mode' must be either 'normal' or 'reverse'"
