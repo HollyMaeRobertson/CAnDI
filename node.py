@@ -10,7 +10,7 @@ class Node:
 		self.istip = False
 		self.height = 0
 		self.locus = ""
-
+		self.unique_id = ''
 
 	def add_child(self,child):
 		#make sure that the child is not already in there

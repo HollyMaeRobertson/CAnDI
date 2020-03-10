@@ -27,7 +27,8 @@ def build(instr):
 	begining = "Yep"
 	keepgoing = True
 	current_node = None
-	
+	counter = 0
+
 	while keepgoing == True:
 		# The first node should be a root for our tree
 		if nextchar == "(" and begining == "Yep":
@@ -68,6 +69,8 @@ def build(instr):
 				nextchar = instr[index]
 			
 			current_node.label = name
+			current_node.unique_id = str(counter)
+			counter += 1
 			index -= 1
 		
 		# The ends of trees in newick format are indicated by semicolons
@@ -140,7 +143,7 @@ def build(instr):
 		nextchar = instr[index]
 		name = ""
 		branch = ""
-	
+
 	return root, name_array
 
 
@@ -179,14 +182,12 @@ def postorder2(root, total_list = None, subtrees = False):
 	if total_list is None:
 		total_list = []
 
-	# When subtrees is True, we want to make an extra bipartition that encompasss the whole subtree
-	# aaaand we want that bipart to be assessed against slightly different criteria to the rest of the subtree?
-	# or can the critieria be the same they just have to include the next bipart up in the species list?
+	# When subtrees is True, we want to make an extra bipartition that encompasses the whole subtree
 	if subtrees == True:
 		bipart = []
 		other_side = [] # There is no other side as this is the whole tree
 		
-		bipart.append(str(root.length))
+		bipart.append(str(root.unique_id))
 		bipart.append(str(root.label))
 		bipart.append(other_side)
 
@@ -201,7 +202,7 @@ def postorder2(root, total_list = None, subtrees = False):
 		if i.children:
 			bipart = []
 
-			bipart.append(str(i.length)) 
+			bipart.append(str(i.unique_id)) 
 			bipart.append(str(i.label)) 			
 				
 			# The other side of the bipart is information we want to go into it
@@ -499,7 +500,7 @@ def tree_map(root, bipart_list):
 	bipart_dict = {}
 
 	for i in bipart_list:
-		key = str(i[0][3:])
+		key = str(i[0][0])
 		if key in bipart_dict.keys():
 			bipart_dict[key] += 1
 		else:
@@ -508,24 +509,26 @@ def tree_map(root, bipart_list):
 	# Find each bipartition in the dictionary in the species tree using node_finder
 	# and change the label to the number of times it was recorded in the list (i.e. 
 	# the number of conflicts/concordances at that node in the gene tree(s))
-	for bipart in bipart_dict.keys():	
-		label = str(bipart_dict[bipart])
-		node_finder(root, bipart, label)
+	for key in bipart_dict.keys():	
+		label = str(bipart_dict[key])
+		node_finder(root, key, label)
 
 
-def tree_map2(root, list, label):
+def tree_map2(root, rel_list, label):
 	'''this replaces the labels of each node in a species tree with a given label,
 	provided they are in a list of biparts'''
 
 	bipart_dict = {}
-	root = root.parent
+	if root.parent:
+		root = root.parent
 
-	for i in list:
-		key = str(i[0][3:])
+	for i in rel_list:
+		key = str(i[0][0])
 		bipart_dict[key] = label
-
-	for bipart in bipart_dict.keys():
-		node_finder(root, bipart, label)
+	
+	print bipart_dict
+	for key in bipart_dict.keys():
+		node_finder(root, key, label)
 
 def clear_labels(root):
 	'''removes all the labels downstream of the root node specified, except
@@ -555,7 +558,7 @@ def change_tips_to_species(root):
 		change_tips_to_species(i)	
 
 
-def node_finder(root, bipartition, label, first_time = True):
+def node_finder(root, node_id, label):
 	'''traverses tree and changes the label of the node with an identical bipartition 
 	to the one specified'''
 	
@@ -570,14 +573,13 @@ def node_finder(root, bipartition, label, first_time = True):
 	'''
 
 	for i in root.children:
-		if i.istip == False:
-			test_bipart = postorder3(i)
-			test_bipart = str(test_bipart) # :/
-
-			if test_bipart == bipartition:
+		if i.istip == False:	
+			current_id = i.unique_id
+			
+			if current_id == node_id :
 				i.label = label
 				
-		node_finder(i, bipartition, label, first_time = False)
+		node_finder(i, node_id, label)
 
 def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 	'''This function compares a subtree to tree1, which has already
@@ -766,7 +768,6 @@ if __name__ == "__main__":
 		clear_labels(tree2)
 
 		for tree in trees:
-			print "new tree: " + str(tree)
 			conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 			tree_map2(tree, conflicts, 'X')
 
@@ -781,7 +782,7 @@ if __name__ == "__main__":
 		for node in tricky_nodes:
 			node_bipart = []
 			node_bipart_list = []
-			node_bipart.append(node.length)
+			node_bipart.append(node.unique_id)
 			node_bipart.append(node.label)
 			node_bipart.append([])
 			node_bipart = postorder3(node, node_bipart)
@@ -805,8 +806,8 @@ if __name__ == "__main__":
 			
 			name_array2.extend(new_names)
 
-			rel_list = comp_biparts(tree1_biparts, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
-			
+			rel_list = comp_biparts(node_bipart_list, tree1_biparts, name_array2, name_array1, sys.argv[2], cutoff)
+			print rel_list	
 			conflicts = []
 			concordances = []
 
@@ -817,8 +818,12 @@ if __name__ == "__main__":
 				elif rel[1] == 'concordant':
 					concordances.append(rel)
 			
-			#map these back on to whole tree
-			
+		
+		print concordances
+		
+		#map these back on to whole tree
+		tree_map2(tree2, conflicts, 'X')
+		tree_map2(tree2, concordances, '*')
 
 		label_duplications(tree2)
 
