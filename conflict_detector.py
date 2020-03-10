@@ -504,7 +504,7 @@ def tree_map(root, bipart_list):
 			bipart_dict[key] += 1
 		else:
 			bipart_dict[key] = 1
-
+	print bipart_dict
 	# Find each bipartition in the dictionary in the species tree using node_finder
 	# and change the label to the number of times it was recorded in the list (i.e. 
 	# the number of conflicts/concordances at that node in the gene tree(s))
@@ -530,6 +530,8 @@ def tree_map2(root, list, label):
 def clear_labels(root):
 	'''removes all the labels downstream of the root node specified, except
 	taxon names'''
+	if root.istip == False:
+		root.label = ''
 
 	for i in root.children:
 		if i.istip == False:
@@ -557,6 +559,16 @@ def node_finder(root, bipartition, label, first_time = True):
 	'''traverses tree and changes the label of the node with an identical bipartition 
 	to the one specified'''
 	
+	'''	
+	if first_time == True:
+		# Check the root
+		test_bipart = postorder3(root)
+		test_bipart = str(test_bipart)
+	
+		if test_bipart == bipartition:
+			root.label = label
+	'''
+
 	for i in root.children:
 		if i.istip == False:
 			test_bipart = postorder3(i)
@@ -568,7 +580,7 @@ def node_finder(root, bipartition, label, first_time = True):
 		node_finder(i, bipartition, label, first_time = False)
 
 def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
-	'''This function compares a subtree to 'tree1', which has already
+	'''This function compares a subtree to tree1, which has already
 	been split into biparts.'''
 
 	conflicts = []
@@ -608,6 +620,33 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 
 	return conflicts, concordances
 
+def identify_tricky_nodes(root, subtree_list, tricky_nodes = None, is_root = True):
+	'''This takes the root node of a tree, a list of all the subtree nodes, 
+	and returns a list of all the nodes that are not either a) a duplication
+	node; b) a subtree root or c) within a subtree '''
+	
+	if tricky_nodes is None:
+		tricky_nodes = []
+	'''
+	if is_root == True:
+		label_duplications(root, recursive = False)
+
+		if root.label != 'D' and root not in subtree_list and root.istip == False:
+			tricky_nodes.append(root)
+		elif root in subtree_list:
+			return tricky_nodes
+	'''
+	for child in root.children:
+		label_duplications(child, recursive = False)
+		
+		if child.label != 'D' and child not in subtree_list and child.istip == False:
+			tricky_nodes.append(child)
+		elif child in subtree_list or child.istip == True:
+			continue
+		identify_tricky_nodes(child, subtree_list, tricky_nodes, is_root = False)
+
+	return tricky_nodes
+
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
 		print "python " + sys.argv[0] + " species_tree folder_of_homologs cutoff mode(normal/reverse)"
@@ -623,6 +662,12 @@ if __name__ == "__main__":
 		n1 = i
 	tree1, name_array1 = build(n1)
 	tree1_biparts = postorder2(tree1)
+	all_taxa = []
+	all_taxa.append(tree1.length)
+	all_taxa.append(tree1.label)
+	all_taxa.append([])
+	all_taxa = postorder3(tree1, all_taxa)	
+	tree1_biparts.append(all_taxa)
 	
 	# When we're reading a folder of homologous gene trees
 	if mode == "normal":
@@ -651,15 +696,46 @@ if __name__ == "__main__":
 				conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 				total_conflicts.extend(conflicts)
 				total_concordances.extend(concordances)
-			
-				rel_list = comp_biparts(tree1_biparts, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
+				
+			# Find the tricky nodes
+			tricky_nodes = identify_tricky_nodes(tree2, trees)
 
+			for node in tricky_nodes:
+				node_bipart = []
+				node_bipart_list = []
+				node_bipart.append(node.length)
+				node_bipart.append(node.label)
+				node_bipart.append([])
+				node_bipart = postorder3(node, node_bipart)
+				node_bipart_list.append(node_bipart)
+				name_array2 = postorder3(node)
+				
+				current_node = node
+
+				while True:
+					parent = current_node.parent
+					label_duplications(parent, recursive = False)
+					if parent.label == 'D':
+						current_node = parent
+					elif type(parent) is None:
+						break
+					else:
+						for i in parent.children:
+							if i != current_node:
+								new_names = postorder3(i)
+						break
+				
+				name_array2.extend(new_names)
+
+				rel_list = comp_biparts(tree1_biparts, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
+				
 				for rel in rel_list:
+					print rel[1]	
 					if rel[1] == 'conflict':
 						total_conflicts.append(rel)
 					elif rel[1] == 'concordant':
 						total_concordances.append(rel)
-
+			
 		# Map concordances and conflicts back onto the tree using the lists
 		print "\n"
 		clear_labels(tree1)
@@ -698,6 +774,52 @@ if __name__ == "__main__":
 			conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 			tree_map2(tree, concordances, '*')
 		
+
+		# Find the tricky nodes
+		tricky_nodes = identify_tricky_nodes(tree2, trees)
+
+		for node in tricky_nodes:
+			node_bipart = []
+			node_bipart_list = []
+			node_bipart.append(node.length)
+			node_bipart.append(node.label)
+			node_bipart.append([])
+			node_bipart = postorder3(node, node_bipart)
+			node_bipart_list.append(node_bipart)
+			name_array2 = postorder3(node)
+			
+			current_node = node
+
+			while True:
+				parent = current_node.parent
+				label_duplications(parent, recursive = False)
+				if parent.label == 'D':
+					current_node = parent
+				elif type(parent) is None:
+					break
+				else:
+					for i in parent.children:
+						if i != current_node:
+							new_names = postorder3(i)
+					break
+			
+			name_array2.extend(new_names)
+
+			rel_list = comp_biparts(tree1_biparts, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
+			
+			conflicts = []
+			concordances = []
+
+			for rel in rel_list:
+				print rel[1]	
+				if rel[1] == 'conflict':
+					conflicts.append(rel)
+				elif rel[1] == 'concordant':
+					concordances.append(rel)
+			
+			#map these back on to whole tree
+			
+
 		label_duplications(tree2)
 
 		change_tips_to_locus(tree2)
