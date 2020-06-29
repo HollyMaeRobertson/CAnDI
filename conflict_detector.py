@@ -13,6 +13,8 @@ showing conflict with the species tree, concordance with the species tree,
 or a duplication event.
 '''
 
+'''test text'''
+
 import sys, os
 from node import Node
  
@@ -21,7 +23,7 @@ def build(instr):
 	puts it in a data structure that can be easily traversed'''
 
 	root = None
-	name_array =[]
+	name_array = []
 	index = 0
 	nextchar = instr[index]
 	begining = "Yep"
