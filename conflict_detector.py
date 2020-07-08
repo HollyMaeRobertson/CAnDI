@@ -13,8 +13,6 @@ showing conflict with the species tree, concordance with the species tree,
 or a duplication event.
 '''
 
-'''test text'''
-
 import sys, os
 from node import Node
  
@@ -279,10 +277,138 @@ def bipart_properties(bp1, bp2):
 		return "conflict"
 
 
+
+def sort_conflicts(conflicts):
+	'''This should sort a list of biparts that conflict 
+	with the species tree into nodes and then from there 
+	into separate "conflict topologies". Returns a
+	dictionary which contains another dictionary for each
+	node, which in turn contains the different conflicts.'''
+
+	node_dict = {}
+
+	for conflict in conflicts:
+		bipart = conflict[2]
+		
+		bipart_node = conflict[0][0]
+
+		if bipart_node not in node_dict.keys():
+			node_dict[bipart_node] = [bipart]
+		else:
+			node_dict[bipart_node].append(bipart)
+
+	complete_dict = {}
+
+
+	for key in node_dict.keys():
+		# List of all the biparts
+		bipart_list = node_dict[key]
+		
+		# Make a 'holding' dictionary to put everything from this node into
+		conflict_dict = {}
+
+		# Add a first entry to the dictionary
+		conflict_dict['conflict_1'] = [bipart_list[0]]
+
+		# Now comes the hard bit
+		for bipart in bipart_list[1:]:
+			index = 1
+			bp1 = bipart[3:]
+
+			while True:
+
+				name = "conflict_" + str(index)
+
+				if name in conflict_dict.keys():
+					bp2 = conflict_dict[name][0][3:]
+
+				else:
+					sys.stderr.write("Making list for node_" + key + " conflict_" + str(index) + "\r")
+					conflict_dict[name] = [bipart]
+					break
+
+				rel = bipart_properties(bp1, bp2)
+				
+				if rel == 'concordant':
+					conflict_dict[name].append(bipart)
+					index = 1
+					break
+				
+				else:
+					# If not concordant, check next list entry
+					index += 1
+
+		complete_dict[key] = conflict_dict
+
+	return complete_dict
+
+def an_extremely_specific_function(a_list):
+	'''This function takes a list and returns the length of 
+	the second entry, as long as the second entry is also a list.
+	It is mainly just for use in the below function conflict_stats, 
+	and is hence  highly specific. '''
+	if isinstance(a_list[1], list):
+		return len(a_list[1])
+	else:
+		print "not a list!"
+
+def conflict_stats(conflicts_dict, tree):
+	'''This function should take a dictionary from sort_conflicts
+	and calculate the most common conflict at each node, second-most
+	common, etc.'''
+	
+	# First thing we're going to do is convert every entry in the 
+	# dictionary within a dictionary to a list in form [key, [bp1, bp2, ...]]
+	# Because *reasons*
+	# (Maybe clean this up later Holly :/)
+	stats_dict = {}
+
+	for node in conflicts_dict.keys():
+		stats_dict[node] = []
+		for conflict in conflicts_dict[node].keys():
+			bipart_list = conflicts_dict[node][conflict]
+			new_list = [conflict, bipart_list]
+			stats_dict[node].append(new_list)
+		
+	# Next we want to order all the conflicts within each node from most common to least common
+	for node in stats_dict.keys():
+		print ""
+		node_on_tree = node_finder(tree, node)
+		node_bipart = postorder3(node_on_tree)
+		print "Node " + node + ": " + str(node_bipart) + "\n"
+		stats_dict[node].sort(reverse=True, key=an_extremely_specific_function)
+
+		# Then add up the total number of conflicts at that node? (where to store?)
+		total = 0
+		for conflict in stats_dict[node]:
+			total += len(conflict[1])
+		
+		# Now let's calculate the percentages of conflict up to a certain threshold
+		# Should threshold be % of total conflict or numbers of conflicts counted?
+		counter = 0
+		cumulative_percent = 0
+
+		for conflict in stats_dict[node]:
+			how_common = len(conflict[1])
+			percent = float(how_common)/total * 100
+			percent = round(percent, 2)
+			
+			if int(cumulative_percent) < 90 and counter < 5:
+				print "At node " + str(node) + ", " + conflict[0] + " accounts for " + str(percent) + "% of all (" + str(total) + ") conflicts. The bipart is: " + str(conflict[1][0][3:])
+			
+			else:
+				print "\nPercentage reported for node " + node + " (conflict_detector stops after 5 most common nodes currently): " + str(cumulative_percent) + "%. The remaining conflict is shared by " + str(len(stats_dict[node])-5) + " different conflicts.\n"
+				break
+			
+			cumulative_percent += percent
+			counter += 1
+
+
+
 def make_string(bipart):
 	'''This is to make it easier to understand the output when 
 	printing things. It makes a neat string out of a bipart 
-	made in postorder2 that shows both sides'''
+	made in postorder2 that shows both sides.'''
 	
 	name = ''
 	bp = bipart[3:]
@@ -361,9 +487,10 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 				outf.write(str(rel) + ": " + bp1_string + i[1] + " " + bp2_string + j[1] + "\n")
 				
 				if rel == "conflict" or rel == "concordant":
-					j_info = [str(rel), bp2_string, str(j[1]), str(j[0])]
+					j_info = [str(rel), j]
 					various_relationships.append(j_info)
 					lengths.append(len(test_bp2))
+					
 					
 			# Otherwise writes to the log file but doesn't store the relationship in the program
 			else:
@@ -375,7 +502,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 		if len(various_relationships) == 1:
 			j_info = various_relationships[0]
 			#print "\n" + str(count) + " " + j_info[0] + "\t" + bp1_string + " " + str(i[1]) + " " + str(i[0]) + "    " + j_info[1] + " " + j_info[2] + " " + j_info[3]
-			relationship_list.append([i,j_info[0]])
+			relationship_list.append([i, j_info[0], j_info[1]])
 			
 		elif len(various_relationships) != 0:
 			num = 100000000000000000
@@ -388,10 +515,10 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 				counter += 1
 			
 			#print "\n" + str(count) + " " + j_info[0] + "\t" + bp1_string + " " + str(i[1]) + " " + str(i[0]) + "    " + j_info[1] + " " + j_info[2] + " " + j_info[3]
-			relationship_list.append([i, j_info[0]])
+			relationship_list.append([i, j_info[0], j_info[1]])
 
 		count += 1 
-		
+
 	return relationship_list
 
 
@@ -446,11 +573,11 @@ def subtrees_function(root, subtrees = None):
 	
 	# If there are no subduplications at all, great! 
 	else:
-		# If this node is a duplication node (it should be if we've 
-		# got to this point), we make two subtrees
-		#if duplication == "Yes":
-		subtrees.append(side1)
-		subtrees.append(side2)
+		if duplication == "Yes":
+			subtrees.append(side1)
+			subtrees.append(side2)
+		elif duplication == "No":
+			subtrees.append(root)
 			
 	return subtrees		
 
@@ -513,14 +640,15 @@ def tree_map(root, bipart_list):
 	# Find each bipartition in the dictionary in the species tree using node_finder
 	# and change the label to the number of times it was recorded in the list (i.e. 
 	# the number of conflicts/concordances at that node in the gene tree(s))
-	for key in bipart_dict.keys():	
+	for key in bipart_dict.keys():
 		label = str(bipart_dict[key])
-		node_finder(root, key, label)
+		node = node_finder(root, key)
+		node.label = label
 
 
 def tree_map2(root, rel_list, label):
 	'''this replaces the labels of each node in a species tree with a given label,
-	provided they are in a list of biparts'''
+	provided they are in the list of biparts passed to the function (rel_list)'''
 
 	bipart_dict = {}
 	if root.parent:
@@ -530,9 +658,10 @@ def tree_map2(root, rel_list, label):
 		key = str(i[0][0])
 		bipart_dict[key] = label
 	
-	#print bipart_dict
+
 	for key in bipart_dict.keys():
-		node_finder(root, key, label)
+		node = node_finder(root, key)
+		node.label = label
 
 def clear_labels(root):
 	'''removes all the labels downstream of the root node specified, except
@@ -561,29 +690,40 @@ def change_tips_to_species(root):
 		
 		change_tips_to_species(i)	
 
+def node_finder(root, node_id):
+	'''Calls node_finder_recursive to find the node, then returns it.
+	Bit of a hack but ok'''
+	
+	node = node_finder_recursive(root, node_id, node = None)
+	if len(node) == 1:
+		node = node[0]
+	else:
+		print "problem :("
 
-def node_finder(root, node_id, label):
-	'''traverses tree and changes the label of the node with an identical bipartition 
-	to the one specified'''
+	return node
+
+
+def node_finder_recursive(root, node_id, node = None, first_time = True):
+	'''Traverses tree and returns the node with the corresponding id'''
+
+	if node is None:
+		node = []
 	
-	'''	
 	if first_time == True:
-		# Check the root
-		test_bipart = postorder3(root)
-		test_bipart = str(test_bipart)
-	
-		if test_bipart == bipartition:
-			root.label = label
-	'''
+		if root.unique_id == node_id:
+			node.append(root)
 
 	for i in root.children:
-		if i.istip == False:	
+		if i.istip == False:
 			current_id = i.unique_id
 			
-			if current_id == node_id :
-				i.label = label
-				
-		node_finder(i, node_id, label)
+			if current_id == node_id:
+				node.append(i)
+								
+		node_finder_recursive(i, node_id, node, first_time = False)
+
+	return node
+		
 
 def compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff):
 	'''This function compares a subtree to tree1, which has already
@@ -637,7 +777,7 @@ def identify_tricky_nodes(root, subtree_list, tricky_nodes = None, is_root = Tru
 	
 	if tricky_nodes is None:
 		tricky_nodes = []
-	'''
+	
 	if is_root == True:
 		label_duplications(root, recursive = False)
 
@@ -645,7 +785,7 @@ def identify_tricky_nodes(root, subtree_list, tricky_nodes = None, is_root = Tru
 			tricky_nodes.append(root)
 		elif root in subtree_list:
 			return tricky_nodes
-	'''
+	
 	for child in root.children:
 		label_duplications(child, recursive = False)
 		
@@ -673,7 +813,7 @@ if __name__ == "__main__":
 	tree1, name_array1 = build(n1)
 	tree1_biparts = postorder2(tree1)
 	all_taxa = []
-	all_taxa.append(tree1.length)
+	all_taxa.append(tree1.unique_id)
 	all_taxa.append(tree1.label)
 	all_taxa.append([])
 	all_taxa = postorder3(tree1, all_taxa)	
@@ -721,7 +861,7 @@ if __name__ == "__main__":
 			for node in tricky_nodes:
 				node_bipart = []
 				node_bipart_list = []
-				node_bipart.append(node.length)
+				node_bipart.append(node.unique_id)
 				node_bipart.append(node.label)
 				node_bipart.append([])
 				node_bipart = postorder3(node, node_bipart)
@@ -755,7 +895,11 @@ if __name__ == "__main__":
 						total_conflicts.append(rel)
 					elif rel[1] == 'concordant':
 						total_concordances.append(rel)
-			
+				
+		total_conflicts_1 = total_conflicts[:]
+		sorted_conflicts = sort_conflicts(total_conflicts_1)
+		conflict_stats(sorted_conflicts, tree1)
+
 		# Map concordances and conflicts back onto the tree using the lists
 		print "\n"
 		clear_labels(tree1)
