@@ -247,7 +247,7 @@ def unique_array(array, tree1, tree2):
 
 
 def bipart_properties(bp1, bp2):
-	'''This function takes two bipart lists made by postorder2 and compares
+	'''This function takes two biparts made by postorder2 and compares
 	them. It returns a string describing their relationship'''
 	
 	# To make the comparison we need to know their differences
@@ -478,12 +478,25 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 			bp2_string = make_string(j)
 			
 			# What is the relationship between them?
-			rel = bipart_properties(test_bp1, test_bp2)
 			
 			# We only want to record the relationship if the bootstrap > cutoff, OR if one or the other node doesn't have a bootstrap
 			# Problematic as the label might not actually be a bootstrap even if it is an integer
-			if type(i[1]) != int or type(j[1]) != int or str(i[1]) == "" or str(j[1]) == ""  or int(i[1]) > cutoff and int(j[1]) > cutoff:
+			if str.isdigit(i[1]):
+				i_cutoff = int(i[1])
+			else:
+				i_cutoff = 100
+
+			if str.isdigit(j[1]):
+				j_cutoff = int(j[1])
+			else:
+				j_cutoff = 100
+
+
+			if i_cutoff < cutoff+1 or j_cutoff < cutoff+1:
+				pass
+			else:
 				
+				rel = bipart_properties(test_bp1, test_bp2)
 				outf.write(str(rel) + ": " + bp1_string + i[1] + " " + bp2_string + j[1] + "\n")
 				
 				if rel == "conflict" or rel == "concordant":
@@ -493,8 +506,8 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff):
 					
 					
 			# Otherwise writes to the log file but doesn't store the relationship in the program
-			else:
-				outf.write(str(rel) + ": " + str(test_bp1) + i[1] +  " " + str(test_bp2) + j[1] + " "  + "Node not supported" + "\n")
+				else:
+					outf.write(str(rel) + ": " + str(test_bp1) + i[1] +  " " + str(test_bp2) + j[1] + " "  + "Node not supported" + "\n")
 		
 		 
 		# If there is only one thing in various_relationships, great! 
@@ -799,7 +812,7 @@ def identify_tricky_nodes(root, subtree_list, tricky_nodes = None, is_root = Tru
 
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
-		print "python " + sys.argv[0] + " species_tree folder_of_homologs cutoff mode(normal/reverse)"
+		print "python " + sys.argv[0] + " species_tree folder_of_homologs cutoff mode(normal/reverse/bipart_to_search in form X,Y,Z)"
 		sys.exit(0)
 	
 	# Initialise things
@@ -847,8 +860,6 @@ if __name__ == "__main__":
 			# Loop through finding conflicts and concordances
 
 			for tree in trees:
-		
-			
 				conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 				total_conflicts.extend(conflicts)
 				total_concordances.extend(concordances)
@@ -934,6 +945,10 @@ if __name__ == "__main__":
 			for tree in trees:
 				conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
 				tree_map2(tree, conflicts, 'X')
+			
+			
+			for conflict in conflicts:
+				print conflict
 
 			for tree in trees:
 				conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree, mode, cutoff)
@@ -985,6 +1000,8 @@ if __name__ == "__main__":
 						concordances.append(rel)
 			
 			#map these back on to whole tree
+			print conflicts
+
 			tree_map2(tree2, conflicts, 'X')
 			tree_map2(tree2, concordances, '*')
 
@@ -993,11 +1010,13 @@ if __name__ == "__main__":
 			change_tips_to_locus(tree2)
 			new_tree = tree2.get_newick_repr(showbl = True)
 			print new_tree + ";"
-			
+		
 		else:
 			conflicts, concordances = compare_trees(tree1_biparts, name_array1, tree2, mode, cutoff)
 
 			#map these back on to whole tree
+			print conflicts
+
 			tree_map2(tree2, conflicts, 'X')
 			tree_map2(tree2, concordances, '*')
 
@@ -1007,5 +1026,96 @@ if __name__ == "__main__":
 			new_tree = tree2.get_newick_repr(showbl = True)
 			print new_tree + ";"
 
+
 	else:
-		print "'mode' must be either 'normal' or 'reverse'"
+		
+		# Initialise
+		total_conflicts = []
+		total_concordances = []
+
+		# Put the query bipart in a form comp_biparts likes
+		query_entered = mode.split(",")
+		query = [['', '', []]]
+		for taxon in query_entered:
+			query[0].append(taxon)
+
+		print query
+
+		query_name_array = query_entered
+		print query_name_array
+
+		# Open and read the provided folder of homologs
+		homologs_folder = sys.argv[2]
+		file_list = os.listdir(sys.argv[2])
+	
+		concordant_files = []
+
+		for file in file_list:
+			sys.stderr.write("processing " + str(file) + '\r')
+
+			# Build tree 
+			file_location = str(homologs_folder) + "/" + str(file)
+			t2 = open(file_location, "r")
+			for i in t2:
+				n2 = i
+			tree2, name_array2 = build(n2)
+
+			# Make subtrees
+			trees = subtrees_function(tree2)
+
+			# Look for concordances in the subtrees
+			for tree in trees:
+				conflicts, concordances = compare_trees(query, name_array1 , tree, 'normal', cutoff)
+			
+			# Look for concordances in the tricky nodes 
+			# NB This is copy-pasted code >:-(
+			# Consider putting it in a function when you clean it up, Holly
+				
+			tricky_nodes = identify_tricky_nodes(tree2, trees)
+			
+			for node in tricky_nodes:
+				node_bipart = []
+				node_bipart_list = []
+				node_bipart.append(node.unique_id)
+				node_bipart.append(node.label)
+				node_bipart.append([])
+				node_bipart = postorder3(node, node_bipart)
+				node_bipart_list.append(node_bipart)
+				name_array2 = postorder3(node)
+				new_names = []
+
+				current_node = node
+
+				while True:
+					parent = current_node.parent
+					if parent == None:
+						break
+					
+					label_duplications(parent, recursive = False)
+					if parent.label == 'D':
+						current_node = parent
+					else:
+						for i in parent.children:
+							if i != current_node:
+								new_names = postorder3(i)
+						break
+				
+				name_array2.extend(new_names)
+
+				rel_list = comp_biparts(query, node_bipart_list, name_array1, name_array2, sys.argv[2], cutoff)
+				
+				for rel in rel_list:			
+					if rel[1] == 'concordant':
+						concordances.append(rel)
+			
+			#Check concordance list for concordances
+			if len(concordances) != 0:
+				concordant_files.append(file)
+			
+
+		
+		#for file in concordant_files:
+			#print str(file)
+		
+		print "There are " + str(len(concordant_files)) + " files containing the specified bipart, out of " + str(len(file_list)) + " files in total."
+
