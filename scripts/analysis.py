@@ -24,7 +24,7 @@ def sort_conflicts(conflicts):
 	for conflict in conflicts:	
 		node = conflict.species_node
 		bipart = conflict.ortholog_bipart
-
+		
 		if node not in node_dict.keys():
 			node_dict[node] = [bipart]
 		else:
@@ -36,11 +36,11 @@ def sort_conflicts(conflicts):
 	for key in node_dict.keys():
 		bipart_list = node_dict[key]
 		conflict_dict = {}
-		conflict_dict['conflict_1'] = [bipart_list[0]]
+		conflict_dict["conflict_1"] = [bipart_list[0]]
 
 		for bp1 in bipart_list[1:]:
-			index = 1
-
+			index = 1	
+			
 			while True:
 				name = "conflict_" + str(index)
 
@@ -48,13 +48,13 @@ def sort_conflicts(conflicts):
 					bp2 = conflict_dict[name][0]
 				else:
 					sys.stderr.write("Making list for node_" + key + " conflict_" + str(index) + "\r")
-					conflict_dict[name] = [bipart]
+					conflict_dict[name] = [bp1]
 					break
 
 				rel = comparisons.bipart_relationship(bp1, bp2)
 				
 				if rel == 'concordant':
-					conflict_dict[name].append(bipart)
+					conflict_dict[name].append(bp1)
 					index = 1
 					break
 				
@@ -100,7 +100,7 @@ def conflict_stats(conflicts_dict, tree, outfile):
 		# common.
 		node_on_tree = read_trees.node_finder(tree, node)
 		node_bipart = read_trees.postorder3(node_on_tree)
-		stats_dict[node].sort(reverse=True, key=length_of_2nd_entry)
+		stats_dict[node].sort(reverse=True, key=length_of_2nd_entry)	
 
 		# Get the total so we can calculate percentages.
 		total = 0

@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	parser.add_argument("--gene_tree", type=str, help="File containing a gene tree. Required in 'r' mode.")
 	parser.add_argument("--gene_folder", type=str, help="A folder containing all the gene trees to be analysed. Required for 'n' and 's' modes.")
 	parser.add_argument("--cutoff", type=int, default=80, help="Nodes with a bootstrap label below the cutoff value will not be included in the analysis.")
-	parser.add_argument("--query_bipart", type = str, help="A query to be searched. Required in 's' mode, should be entered in the form: 'taxon1,taxon2'.")
+	parser.add_argument("--query_bipart", type = str, help="A query to be searched. Required in 's' mode, should be entered in the form: 'taxon1,taxon2', NO SPACES.")
 	
 	if len(sys.argv) == 1:
 		parser.print_usage()
