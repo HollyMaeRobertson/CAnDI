@@ -142,20 +142,28 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 			relationship_list.append(relation)
 		
 		# If more than one node in the subtree was 'conflict' or 
-		# 'concordant', we count all the nodes that were longest???
-		elif len(various_relationships) != 0:
-			num = 1000000000000000
-			counter = 0
-			
-			# Why did I do this??? Come back to this. 
-			for k in lengths:
-				if k < num:
-					num = k
-					relation = various_relationships[counter]
-				counter += 1
-				relationship_list.append(relation)
+		# 'concordant', we count only the longest node - this is a rare
+                # case.
+                elif len(various_relationships) != 0:
+                        counter = 0
+                        longest_bp = max(lengths)
+                        rels = []
 
-		count += 1 
+                        for length in lengths:
+                                if length == longest_bp:
+                                        rels.append(various_relationships[counter])
+                                counter += 1
+
+                        if len(rels) == 1:
+                                relationship_list.append(rels[0])
+			 
+                        else:
+                                print "Length of rels is " + str(len(rels))
+                                print "Node bipart: " + str(rels[0].species_bipart)
+                                for rel in rels:
+                                        print rel.ortholog_bipart
+		
+                count += 1
 
 	return relationship_list
 
