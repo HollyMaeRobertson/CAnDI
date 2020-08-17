@@ -63,6 +63,7 @@ that bipart."
 		# We need these later.
 		total_conflicts = []
 		total_concordances = []
+                csv_conflicts = []
 
 		# Making sure folder always has the same name.
 		if gene_folder[-1] == '/':
@@ -79,7 +80,8 @@ that bipart."
 			# Building the gene tree. 
 			file_location = str(homologs_folder) + str(file)
 			gene_file = open(file_location, "r")
-			for line in gene_file:
+                                
+                        for line in gene_file:
 				tree = line
                                 gene_root, gene_name_array = make_trees.build(tree)
                                 
@@ -92,9 +94,17 @@ that bipart."
                                 # This catches *most* of the conflicts and concordances.
                                 for tree in trees:
                                         conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name.log", cutoff)
-                                        total_conflicts.extend(conflicts)
                                         total_concordances.extend(concordances)
                                         
+                                        # We only use one conflict per gene (accounting for nesting).
+                                        filtered_conflicts = comparisons.filter_conflicts(conflicts)
+                                        total_conflicts.extend(filtered_conflicts)
+
+                                        # For the csv, we want to include non-nested 
+                                        # alternative conflicts as part of the breakdown.
+                                        conflicts_for_csv = comparisons.filter_conflicts_for_csv(conflicts)
+                                        csv_conflicts.extend(conflicts_for_csv)
+
                                 # A small number of non-duplication nodes on each gene 
                                 # tree can be missed by the subtree method, and we need
                                 # to acccount for these.
@@ -135,7 +145,7 @@ that bipart."
                                                         total_conflicts.append(rel)
                                                 elif rel.relation == 'concordant':
                                                         total_concordances.append(rel)
-                        
+                                       
 		# Extra analysis to get the relative frequenices of the
 		# conflicts, etc.
 		outfile = open(gene_folder[:-1] + "_analysis.csv", "w")

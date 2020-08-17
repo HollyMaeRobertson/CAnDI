@@ -81,8 +81,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 	
 	# The 'tree to map back onto' bipartitions.
 	for bp1 in tree1:
-		various_relationships = []	
-		lengths = []
+		various_relationships = []
 		
 		# Make the first bipart to test, removing missing taxa
 		test_bp1 = list(set(bp1.bipart_proper) - set(mis2))
@@ -128,41 +127,15 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 				if rel == "conflict" or rel == "concordant":
 					if mode == 'n' or 's':
 						relation = Rel(rel, bp1.unique_id, bp2.unique_id)
+                                                relation.add_species_bipart(bp1.bipart_proper)
+                                                relation.add_ortholog_bipart(bp2.bipart_proper)
 					elif mode == 'r':
 						relation = Rel(rel, bp2.unique_id, bp1.unique_id)
-					relation.add_species_bipart(test_bp1)
-					relation.add_ortholog_bipart(test_bp2)
+                                                relation.add_species_bipart(bp2.bipart_proper)
+                                                relation.add_ortholog_bipart(bp1.bipart_proper)
 					various_relationships.append(relation)
-					lengths.append(len(test_bp2))
 
-		# If there was only one relation in the subtree that was 
-		# 'conflict' or 'concordant.
-		if len(various_relationships) == 1:
-			relation = various_relationships[0]
-			relationship_list.append(relation)
-		
-		# If more than one node in the subtree was 'conflict' or 
-		# 'concordant', we count only the longest node - this is a rare
-                # case.
-                elif len(various_relationships) != 0:
-                        counter = 0
-                        longest_bp = max(lengths)
-                        rels = []
-
-                        for length in lengths:
-                                if length == longest_bp:
-                                        rels.append(various_relationships[counter])
-                                counter += 1
-
-                        if len(rels) == 1:
-                                relationship_list.append(rels[0])
-			 
-                        else:
-                                print "Length of rels is " + str(len(rels))
-                                print "Node bipart: " + str(rels[0].species_bipart)
-                                for rel in rels:
-                                        print rel.ortholog_bipart
-		
+		relationship_list.extend(various_relationships)
                 count += 1
 
 	return relationship_list
@@ -216,4 +189,130 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, log_name, cutoff):
 	return conflicts, concordances
 
 
+### SHOULD THESE GO IN "analysis.py"???
 
+def filter_conflicts(conflicts):
+        """The function comp_biparts returns a list of *all* conflicts a subtree
+        has with the species tree. This includes a large number of redundant 
+        conflicts as unlike with concordance (which will always only happen once
+        per speices node per gene tree) a gene tree can conflict with multiple 
+        nodes on the species tree and multiple times with each node. This 
+        function picks one conflict per species node (where one exists), always
+        choosing the most upstream place that conflict has ever been recorded on
+        both the species and gene trees."""
+
+        # We want to end up with exactly 1 or 0 conflicts for every node present.
+        species_nodes = set()
+        for conflict in conflicts:
+                species_nodes.add(conflict.species_node)
+        conflicts_to_return = []
+        
+        for node in species_nodes:
+                current_conflicts = []
+
+                # We need specifically conflicts that refer to this node.
+                for conflict in conflicts:
+                        if conflict.species_node == node:
+                                current_conflicts.append(conflict)
+                
+                # We want to take out the conflict with only the longest 
+                # species_bipart(s).
+                length = len(current_conflicts[0].species_bipart)
+                filtered_conflicts = []
+                for conflict in current_conflicts:
+                        if len(conflict.species_bipart) > length:
+                                length = len(conflict.species_bipart)
+                                filtered_conflicts = []
+                                filtered_conflicts.append(conflict)
+                        elif len(conflict.species_bipart) == length:
+                                filtered_conflicts.append(conflict)
+                
+                # If there are multiple conflicts with the same length of
+                # species_bipart, we then take out the ones with the longest
+                # ortholog_bipart
+                current_conflicts = filtered_conflicts
+                if len(current_conflicts) == 1:
+                        correct_conflict = current_conflicts[0]
+                else:
+                        filtered_conflicts = []
+                        length = len(current_conflicts[0].ortholog_bipart)
+                        for conflict in current_conflicts:
+                                if len(conflict.ortholog_bipart) > length:
+                                        length = len(conflict.ortholog_bipart)
+                                        filtered_conflicts = []
+                                        filtered_conflicts.append(conflict)
+                                elif len(conflict.ortholog_bipart) == length:
+                                        filtered_conflicts.append(conflict)
+                # At this point we just pick a random conflict from those that remain.
+                if len(filtered_conflicts) == 1:
+                        correct_conflict = filtered_conflicts[0]
+                else:
+                        correct_conflict = filtered_conflicts[0]
+                conflicts_to_return.append(correct_conflict)
+
+        return conflicts_to_return
+
+def best_conflict_machine(current_conflicts, best_conflicts):
+        """This function is part of filter_conflicts_for_csv, and it is meant to
+        return either the "best" conflict in a list of conflicts, or None, if 
+        there is no remaining best conflict.
+        """
+        best_conflict = None
+        length = 0
+        for conflict in current_conflicts:
+                if len(conflict.ortholog_bipart) >= length:
+                        include_conflict = True
+                        if best_conflicts:
+                                for conflict2 in best_conflicts:
+                                        rel = bipart_relationship(conflict, conflict2)
+                                        if rel == "1 nested in 2" \
+                                                or rel == "2 nested in 1" \
+                                                or rel == "concordant":
+                                                include_conflict = False
+                                if include_conflict:
+                                        best_conflict = conflict
+                                        length = len(conflict.ortholog_bipart)
+                
+        return best_conflict
+
+def filter_conflicts_for_csv(conflicts):
+
+        # First we're gonna get a list of all the unique species nodes we've got
+        # ordered "biggest" to "smallest" in terms of length of bipart.
+        species_nodes = set()
+        for conflict in conflicts:
+                quick_string = str(conflict.species_node) + ":" + str(len(conflict.species_bipart))
+                species_nodes.add(quick_string)
+
+        species_nodes = list(species_nodes)
+        species_nodes_new = []
+        for node in species_nodes:
+                correct_node = node.split(":")
+                species_nodes_new.append(correct_node)
+        species_nodes = species_nodes_new
+
+        def second_thing(list_two_things):
+                return int(list_two_things[1])
+
+        species_nodes = sorted(species_nodes, key=second_thing, reverse = True)
+        best_conflicts = []
+
+        for node in species_nodes:
+                node_actual = node[0]
+                current_conflicts = []
+                
+                # We only look at conflicts which apply to this species node.
+                for conflict in conflicts:
+                        if conflict.species_node == node_actual:
+                                current_conflicts.append(conflict)
+
+                # We want to add only the longest conflicts that aren't nested 
+                # in any others.
+                while True:
+                        best_conflict = best_conflict_machine(current_conflicts, best_conflicts)
+                        if best_conflict:
+                                best_conflicts.append(best_conflict)
+                        else:
+                                break
+
+        return best_conflicts

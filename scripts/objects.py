@@ -50,12 +50,16 @@ class Rel:
 		self.ortholog_node = ortholog_node
 		self.species_bipart = []
 		self.ortholog_bipart = []
+                self.alt_conflict = None
 
 	def add_species_bipart(self, bipart):
 		self.species_bipart = bipart
 	
 	def add_ortholog_bipart(self, bipart):
 		self.ortholog_bipart = bipart
+
+        def add_alt_conflict(self, conflict):
+                self.alt_conflict = conflict
 
 
 class Node:
