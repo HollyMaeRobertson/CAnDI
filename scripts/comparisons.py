@@ -85,20 +85,29 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 		
 		# Make the first bipart to test, removing missing taxa
 		test_bp1 = list(set(bp1.bipart_proper) - set(mis2))
+                bp1_len = len(list(bp1.bipart_proper))
 
 		# Removing missing taxa can generate a lot of duplicate 
 		# bipartitions. We want to only use the most "downstream" of 
-		# these, which should be the last one in the list, so if there
-		# is an identical bipart further on in the list tree1, we pass 
-		# the others until we reach that one.
-		remaining_bps = [set(i.bipart_proper) - set(mis2) for i in tree1[count+1:]]
-		if test_bp1 in remaining_bps:
+		# these, which should be the one with the shortest overall 
+                # bipart proper.
+                shortest_bp = True
+                for bp in tree1:
+                        bp_len = len(bp.bipart_proper)
+                        test_bp = list(set(bp.bipart_proper) - set(mis2))
+
+                        if test_bp == test_bp1 and bp_len < bp1_len:
+                                shortest_bp = False
+
+		if not shortest_bp:
 			count += 1
 			continue
 
 		for bp2 in tree2:
 			
 			# Removing missing taxa as above.
+                        # (This shouldn't do much as all taxa should be in the 
+                        # species tree though?
 			test_bp2 = list(set(bp2.bipart_proper) - set(mis1))
 
 			# Assuming the label is a bootstrap/confidence value
