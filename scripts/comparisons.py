@@ -77,37 +77,39 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 	count = 0
 
 	# We should get missing taxa to allow us to exclude them later
-	mis1, mis2 = unique_array(name_array1, name_array2)
+        if mode != 's':
+                mis1, mis2 = unique_array(name_array1, name_array2)
+        else:
+                mis1 = []
+                mis2 = []
 	
 	# The 'tree to map back onto' bipartitions.
 	for bp1 in tree1:
 		various_relationships = []
-		
-		# Make the first bipart to test, removing missing taxa
-		test_bp1 = list(set(bp1.bipart_proper) - set(mis2))
+        
+                # Make the first bipart to test, removing missing taxa.
+                test_bp1 = list(set(bp1.bipart_proper) - set(mis2))
                 bp1_len = len(list(bp1.bipart_proper))
 
-		# Removing missing taxa can generate a lot of duplicate 
-		# bipartitions. We want to only use the most "downstream" of 
-		# these, which should be the one with the shortest overall 
+                # Removing missing taxa can generate a lot of duplicate 
+                # bipartitions. We want to only use the most "downstream" of 
+                # these, which should be the one with the shortest overall 
                 # bipart proper.
                 shortest_bp = True
                 for bp in tree1:
                         bp_len = len(bp.bipart_proper)
                         test_bp = list(set(bp.bipart_proper) - set(mis2))
 
-                        if test_bp == test_bp1 and bp_len < bp1_len:
+                        if sorted(test_bp) == sorted(test_bp1) and bp_len < bp1_len:
                                 shortest_bp = False
 
-		if not shortest_bp:
-			count += 1
-			continue
+                if not shortest_bp:
+                        count += 1
+                        continue
 
-		for bp2 in tree2:
-			
+		for bp2 in tree2:	
 			# Removing missing taxa as above.
-                        # (This shouldn't do much as all taxa should be in the 
-                        # species tree though?
+                        # check?
 			test_bp2 = list(set(bp2.bipart_proper) - set(mis1))
 
 			# Assuming the label is a bootstrap/confidence value
@@ -124,7 +126,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 			else:
 				cutoff2 = 100
 
-			if cutoff1 < cutoff+1 or cutoff2 < cutoff+1:
+			if cutoff1 < cutoff or cutoff2 < cutoff:
 				pass
 			
 			else:
