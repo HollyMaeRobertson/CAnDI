@@ -67,8 +67,8 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 	the tree you want to map your relationships back onto. Similarly,
 	name_array1 should correspond with tree1 and name_array2 with tree2.
 	"""
-
-	# Initialise things.
+        
+        # Initialise things.
 	relationship_list = []
 	test_bp1 = []
 	test_bp2 = []
@@ -77,7 +77,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 	count = 0
 
 	# We should get missing taxa to allow us to exclude them later
-        if mode != 's':
+        if mode != "s":
                 mis1, mis2 = unique_array(name_array1, name_array2)
         else:
                 mis1 = []
@@ -133,14 +133,13 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 				# The relationship between the biparts.
 				rel = bipart_relationship(test_bp1, test_bp2)
 				outf.write(str(rel) + ": " + str(bp1.bipart_proper) + " | " + str(bp2.bipart_proper) + "\n")
-				
 				# We only record these two cases.
 				if rel == "conflict" or rel == "concordant":
-					if mode == 'n' or 's':
+					if mode == "n" or mode == "s":
 						relation = Rel(rel, bp1.unique_id, bp2.unique_id)
                                                 relation.add_species_bipart(bp1.bipart_proper)
                                                 relation.add_ortholog_bipart(bp2.bipart_proper)
-					elif mode == 'r':
+					elif mode == "r":
 						relation = Rel(rel, bp2.unique_id, bp1.unique_id)
                                                 relation.add_species_bipart(bp2.bipart_proper)
                                                 relation.add_ortholog_bipart(bp1.bipart_proper)
@@ -151,15 +150,15 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 
 	return relationship_list
 
-def compare_trees(tree1_biparts, name_array1, tree2, mode, log_name, cutoff):
-	"""This function compares a subtree to tree1, which has already	been 
-	split into biparts.
+def compare_trees(species_biparts, species_name_array, subtree, mode, log_name, cutoff):
+	"""This function compares a subtree to a species tree which has already	
+        been split into biparts.
 	"""
 
 	conflicts = []
 	concordances = []
 	keepgoing = True
-	current_node = tree2
+	current_node = subtree
 	new_names = []
 	
 	# We need to add the names that are 'next-door' to this subtree on the 
@@ -168,7 +167,7 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, log_name, cutoff):
 		parent = current_node.parent
 		if parent != None:	
 			make_trees.label_duplications(parent, recursive = False)
-			if parent.label == 'D':
+			if parent.label == "D":
 				current_node = parent
 			else:
 				for i in parent.children:
@@ -179,22 +178,22 @@ def compare_trees(tree1_biparts, name_array1, tree2, mode, log_name, cutoff):
 		else:
 			break
 		
-	name_array2 = read_trees.postorder3(tree2)
-	name_array2 = name_array2.bipart_proper
-	name_array2.extend(new_names)
+	gene_name_array = read_trees.postorder3(subtree)
+	gene_name_array = gene_name_array.bipart_proper
+	gene_name_array.extend(new_names)
 	
 	# Actually making the comparisons.
-	tree2_biparts = read_trees.postorder2(tree2, subtrees = True)
+	subtree_biparts = read_trees.postorder2(subtree, subtrees = True)
 		
-	if mode == "n" or "s":
-		rels = comp_biparts(tree1_biparts, tree2_biparts, name_array1, name_array2, log_name, cutoff, mode)
+	if mode == "n" or mode == "s":
+		rels = comp_biparts(species_biparts, subtree_biparts, species_name_array, gene_name_array, log_name, cutoff, mode)
 	elif mode == "r":
-		rels = comp_biparts(tree2_biparts, tree1_biparts, name_array2, name_array1, log_name, cutoff, mode)
+		rels = comp_biparts(subtree_biparts, species_biparts, gene_name_array, species_name_array, log_name, cutoff, mode)
 	
 	for rel in rels:
-		if rel.relation == 'conflict':
+		if rel.relation == "conflict":
 			conflicts.append(rel)
-		elif rel.relation == 'concordant':
+		elif rel.relation == "concordant":
 			concordances.append(rel)
 
 	return conflicts, concordances

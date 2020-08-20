@@ -167,7 +167,7 @@ that bipart."
 		print "Conflict tree:"
 		print conflict_tree + ";"
 
-	elif mode == 'r':
+        elif mode == "r":
 		# Checking we have the right arguments.
 		if not species_tree or not gene_tree:
 			print "--species_tree and --gene_tree are required arguments in this mode."
@@ -199,7 +199,6 @@ that bipart."
 			outfile = gene_tree + "_subtree_comp.log"
 			for tree in trees:
 				conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, outfile, cutoff)
-								
 				make_trees.tree_map2(tree, conflicts, "X")
 				make_trees.tree_map2(tree, concordances, "*")
 
