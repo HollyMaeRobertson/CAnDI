@@ -108,8 +108,8 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
                         continue
 
 		for bp2 in tree2:	
-			# Removing missing taxa as above.
-                        # check?
+			# Removing missing taxa. This should only be important 
+                        # in "r" mode.
 			test_bp2 = list(set(bp2.bipart_proper) - set(mis1))
 
 			# Assuming the label is a bootstrap/confidence value
@@ -144,6 +144,20 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
                                                 relation.add_species_bipart(bp2.bipart_proper)
                                                 relation.add_ortholog_bipart(bp1.bipart_proper)
 					various_relationships.append(relation)
+
+                                # In a rare subset of cases, directly up from a 
+                                # conflict there is an identical species bipart
+                                # when missing taxa are removed. 
+                                # This is also in conflict and should be 
+                                # recorded as such.
+                                if rel == "conflict" and mode == "n":
+                                        for bp in tree1:
+                                                test_bp = list(set(bp.bipart_proper) - set(mis2))
+                                                if test_bp == test_bp1:
+                                                        new_rel = Rel("conflict", bp.unique_id, bp2.unique_id)
+                                                        new_rel.add_species_bipart(bp.bipart_proper)
+                                                        new_rel.add_ortholog_bipart(bp2.bipart_proper)
+                                                        various_relationships.append(new_rel)
 
 		relationship_list.extend(various_relationships)
                 count += 1
