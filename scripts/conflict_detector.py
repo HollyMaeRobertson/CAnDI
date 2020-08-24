@@ -149,6 +149,8 @@ that bipart."
                                        
 		# Extra analysis to get the relative frequenices of the
 		# conflicts, etc.
+                print "Total: " + str(len(total_conflicts))
+                print "csv: " + str(len(csv_conflicts))
 		outfile = open(gene_folder[:-1] + "_analysis.csv", "w")
 		sorted_conflicts = analysis.sort_conflicts(csv_conflicts)
 		analysis.conflict_stats(sorted_conflicts, species_root, outfile)

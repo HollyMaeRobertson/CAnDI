@@ -286,17 +286,15 @@ def best_conflict_machine(current_conflicts, best_conflicts):
         for conflict in current_conflicts:
                 if len(conflict.ortholog_bipart) >= length:
                         include_conflict = True
-                        if best_conflicts:
-                                for conflict2 in best_conflicts:
-                                        rel = bipart_relationship(conflict, conflict2)
-                                        if rel == "1 nested in 2" \
-                                                or rel == "2 nested in 1" \
-                                                or rel == "concordant":
-                                                include_conflict = False
-                                if include_conflict:
-                                        best_conflict = conflict
-                                        length = len(conflict.ortholog_bipart)
-                
+                        for conflict2 in best_conflicts:
+                                rel = bipart_relationship(conflict.species_bipart, conflict2.species_bipart)
+                                if rel == "1 nested in 2" \
+                                        or rel == "2 nested in 1" \
+                                        or rel == "concordant":
+                                        include_conflict = False
+                        if include_conflict:
+                                best_conflict = conflict
+                                length = len(conflict.ortholog_bipart)
         return best_conflict
 
 def filter_conflicts_for_csv(conflicts):
@@ -338,5 +336,4 @@ def filter_conflicts_for_csv(conflicts):
                                 best_conflicts.append(best_conflict)
                         else:
                                 break
-
         return best_conflicts
