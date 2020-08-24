@@ -153,7 +153,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
                                 if rel == "conflict" and mode == "n":
                                         for bp in tree1:
                                                 test_bp = list(set(bp.bipart_proper) - set(mis2))
-                                                if test_bp == test_bp1:
+                                                if sorted(test_bp) == sorted(test_bp1):
                                                         new_rel = Rel("conflict", bp.unique_id, bp2.unique_id)
                                                         new_rel.add_species_bipart(bp.bipart_proper)
                                                         new_rel.add_ortholog_bipart(bp2.bipart_proper)
