@@ -117,7 +117,7 @@ that bipart."
 
                                         # Making an appropriate name array as we need to
                                         # include all the names from just upstream of 
-                                        # the node (WHY THOUGH???).
+                                        # the node.
                                         new_names = []
                                         current_node = node
                                         while True:
@@ -143,14 +143,14 @@ that bipart."
                                         for rel in rel_list:
                                                 if rel.relation == 'conflict':
                                                         total_conflicts.append(rel)
+                                                        csv_conflicts.append(rel)
                                                 elif rel.relation == 'concordant':
                                                         total_concordances.append(rel)
                                        
 		# Extra analysis to get the relative frequenices of the
 		# conflicts, etc.
 		outfile = open(gene_folder[:-1] + "_analysis.csv", "w")
-		total_conflicts_copy = total_conflicts[:]
-		sorted_conflicts = analysis.sort_conflicts(total_conflicts_copy)
+		sorted_conflicts = analysis.sort_conflicts(csv_conflicts)
 		analysis.conflict_stats(sorted_conflicts, species_root, outfile)
 
 		# Map concordances and conflicts back onto the tree using the lists
