@@ -265,7 +265,7 @@ def label_duplications(root, recursive = True):
 	
 def tree_map(tree_root, bipart_list):
 	"""This replaces the labels of each node in a species tree with the 
-	numbers of entries in bipart_list. 
+	numbers of entries that apply to that node in bipart_list. 
 
 	WARNING: this function *replaces* the labels in the provided tree, it
 	doesn't make a new tree with different ones new ones. Be careful when 
@@ -333,5 +333,17 @@ def change_tips_to_species(root):
 					break
 		
 		change_tips_to_species(i)	
+
+def add_zeros(root):
+        """Replaces all blank labels in a tree with the label '0'."""
+	if root.istip == False:
+             if root.label == "":
+                    root.label = "0"
+
+	for i in root.children:
+		if i.istip == False:
+                        if i.label == "":
+                                i.label = "0"
+		add_zeros(i)
 
 

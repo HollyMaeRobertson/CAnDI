@@ -13,6 +13,7 @@ if __name__ == "__main__":
 	parser.add_argument("--gene_folder", type=str, help="A folder containing all the gene trees to be analysed. Required for 'n' and 's' modes.")
 	parser.add_argument("--cutoff", type=int, default=80, help="Nodes with a bootstrap label below the cutoff value will not be included in the analysis.")
 	parser.add_argument("--query_bipart", type = str, help="A query to be searched. Required in 's' mode, should be entered in the form: 'taxon1,taxon2', NO SPACES.")
+        parser.add_argument("--no_csv", action="store_true", help="Program does not create a .csv file with a more detailed breakdown of the different conflict abundences.")
 	
 	if len(sys.argv) == 1:
 		parser.print_usage()
@@ -63,7 +64,6 @@ that bipart."
 		# We need these later.
 		total_conflicts = []
 		total_concordances = []
-                csv_conflicts = []
 
 		# Making sure folder always has the same name.
 		if gene_folder[-1] == '/':
@@ -99,11 +99,6 @@ that bipart."
                                         # We only use one conflict per gene (accounting for nesting).
                                         filtered_conflicts = comparisons.filter_conflicts(conflicts)
                                         total_conflicts.extend(filtered_conflicts)
-
-                                        # For the csv, we want to include non-nested 
-                                        # alternative conflicts as part of the breakdown.
-                                        conflicts_for_csv = comparisons.filter_conflicts_for_csv(conflicts)
-                                        csv_conflicts.extend(conflicts_for_csv)
 
                                 # A small number of non-duplication nodes on each gene 
                                 # tree can be missed by the subtree method, and we need
@@ -143,28 +138,27 @@ that bipart."
                                         for rel in rel_list:
                                                 if rel.relation == 'conflict':
                                                         total_conflicts.append(rel)
-                                                        csv_conflicts.append(rel)
                                                 elif rel.relation == 'concordant':
                                                         total_concordances.append(rel)
-                                       
-		# Extra analysis to get the relative frequenices of the
-		# conflicts, etc.
-                print "Total: " + str(len(total_conflicts))
-                print "csv: " + str(len(csv_conflicts))
-		outfile = open(gene_folder[:-1] + "_analysis.csv", "w")
-		sorted_conflicts = analysis.sort_conflicts(csv_conflicts)
-		analysis.conflict_stats(sorted_conflicts, species_root, outfile)
+                if not args.no_csv:
+                        # Extra analysis to get the relative frequenices of the
+                        # conflicts, etc.
+                        outfile = open(homologs_folder[:-1] + "_analysis.csv", "w")
+                        sorted_conflicts = analysis.sort_conflicts(total_conflicts)
+                        analysis.conflict_stats(sorted_conflicts, species_root, outfile)
 
 		# Map concordances and conflicts back onto the tree using the lists
 		print "\n"
 		make_trees.clear_labels(species_root)
 		make_trees.tree_map(species_root, total_concordances)
-		concordance_tree = species_root.get_newick_repr(showbl = True)
+		make_trees.add_zeros(species_root)
+                concordance_tree = species_root.get_newick_repr(showbl = True)
 		print "Concordance tree: "
 		print concordance_tree + ";"
 
 		make_trees.clear_labels(species_root)
 		make_trees.tree_map(species_root, total_conflicts)
+                make_trees.add_zeros(species_root)
 		conflict_tree = species_root.get_newick_repr(showbl = True)
 		print "Conflict tree:"
 		print conflict_tree + ";"
@@ -342,6 +336,7 @@ that bipart."
 				concordant_files.append(filename)
 
 		# Printing the list of files concordant.
+                print "\n"
 		for file in concordant_files:
 			print str(file)
 

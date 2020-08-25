@@ -212,9 +212,6 @@ def compare_trees(species_biparts, species_name_array, subtree, mode, log_name, 
 
 	return conflicts, concordances
 
-
-### SHOULD THESE GO IN "analysis.py"???
-
 def filter_conflicts(conflicts):
         """The function comp_biparts returns a list of *all* conflicts a subtree
         has with the species tree. This includes a large number of redundant 
@@ -239,47 +236,23 @@ def filter_conflicts(conflicts):
                         if conflict.species_node == node:
                                 current_conflicts.append(conflict)
                 
-                # We want to take out the conflict with only the longest 
-                # species_bipart(s).
-                length = len(current_conflicts[0].species_bipart)
-                filtered_conflicts = []
-                for conflict in current_conflicts:
-                        if len(conflict.species_bipart) > length:
-                                length = len(conflict.species_bipart)
-                                filtered_conflicts = []
-                                filtered_conflicts.append(conflict)
-                        elif len(conflict.species_bipart) == length:
-                                filtered_conflicts.append(conflict)
-                
-                # If there are multiple conflicts with the same length of
-                # species_bipart, we then take out the ones with the longest
-                # ortholog_bipart
-                current_conflicts = filtered_conflicts
+                # If there are multiple conflicts, we then take out the ones 
+                # with the longest ortholog_bipart.
                 if len(current_conflicts) == 1:
                         correct_conflict = current_conflicts[0]
+                
                 else:
-                        filtered_conflicts = []
-                        length = len(current_conflicts[0].ortholog_bipart)
-                        for conflict in current_conflicts:
-                                if len(conflict.ortholog_bipart) > length:
-                                        length = len(conflict.ortholog_bipart)
-                                        filtered_conflicts = []
-                                        filtered_conflicts.append(conflict)
-                                elif len(conflict.ortholog_bipart) == length:
-                                        filtered_conflicts.append(conflict)
-                # At this point we just pick a random conflict from those that remain.
-                if len(filtered_conflicts) == 1:
-                        correct_conflict = filtered_conflicts[0]
-                else:
-                        correct_conflict = filtered_conflicts[0]
+                        correct_conflict = best_conflict_machine(current_conflicts, [])
+                        alt_conflict = best_conflict_machine(current_conflicts, [correct_conflict])
+                        if alt_conflict:
+                                correct_conflict.add_alt_conflict(alt_conflict.ortholog_bipart)
                 conflicts_to_return.append(correct_conflict)
 
         return conflicts_to_return
 
 def best_conflict_machine(current_conflicts, best_conflicts):
-        """This function is part of filter_conflicts_for_csv, and it is meant to
-        return either the "best" conflict in a list of conflicts, or None, if 
-        there is no remaining best conflict.
+        """The 'best' conflict from a list of potential conflicts has the 
+        longest ortholog bipart and isn't nested in any other conflicts.
         """
         best_conflict = None
         length = 0
@@ -287,7 +260,7 @@ def best_conflict_machine(current_conflicts, best_conflicts):
                 if len(conflict.ortholog_bipart) >= length:
                         include_conflict = True
                         for conflict2 in best_conflicts:
-                                rel = bipart_relationship(conflict.species_bipart, conflict2.species_bipart)
+                                rel = bipart_relationship(conflict.ortholog_bipart, conflict2.ortholog_bipart)
                                 if rel == "1 nested in 2" \
                                         or rel == "2 nested in 1" \
                                         or rel == "concordant":

@@ -23,38 +23,38 @@ def sort_conflicts(conflicts):
 	# dictionary, sorting them by node id.
 	for conflict in conflicts:	
 		node = conflict.species_node
-		bipart = conflict.ortholog_bipart
 		
 		if node not in node_dict.keys():
-			node_dict[node] = [bipart]
+			node_dict[node] = [conflict]
 		else:
-			node_dict[node].append(bipart)
+			node_dict[node].append(conflict)
 
 	# Now we sort each bipart by type of conflict within its node.
 	complete_dict = {}
 
 	for key in node_dict.keys():
-		bipart_list = node_dict[key]
+		conflict_list = node_dict[key]
 		conflict_dict = {}
-		conflict_dict["conflict_1"] = [bipart_list[0]]
+		conflict_dict["conflict_1"] = [conflict_list[0]]
 
-		for bp1 in bipart_list[1:]:
-			index = 1	
+		for conflict in conflict_list[1:]:
+			index = 1
+                        bp1 = conflict.ortholog_bipart
 			
 			while True:
 				name = "conflict_" + str(index)
 
 				if name in conflict_dict.keys():
-					bp2 = conflict_dict[name][0]
+					bp2 = conflict_dict[name][0].ortholog_bipart
 				else:
 					sys.stderr.write("Making list for node_" + key + " conflict_" + str(index) + "\r")
-					conflict_dict[name] = [bp1]
+					conflict_dict[name] = [conflict]
 					break
 
 				rel = comparisons.bipart_relationship(bp1, bp2)
 				
 				if rel == 'concordant':
-					conflict_dict[name].append(bp1)
+					conflict_dict[name].append(conflict)
 					index = 1
 					break
 				
@@ -88,12 +88,12 @@ def conflict_stats(conflicts_dict, tree, outfile):
 	for node in conflicts_dict.keys():
 		stats_dict[node] = []
 		
-		for conflict in conflicts_dict[node].keys():
-			bipart_list = conflicts_dict[node][conflict]
-			new_list = [conflict, bipart_list]
+		for name in conflicts_dict[node].keys():
+			conflict_list = conflicts_dict[node][name]
+			new_list = [name, conflict_list]
 			stats_dict[node].append(new_list)
 		
-	outfile.write("node_id,species_bipart,ortholog_bipart,number_of_conflicts,percentage\n")
+	outfile.write("node_id,species_bipart,ortholog_bipart,alternative_conflicts,number_of_conflicts,percentage\n")
 
 	for node in stats_dict.keys():	
 		# Order all the conflicts within each node from most to least 
@@ -118,7 +118,23 @@ def conflict_stats(conflicts_dict, tree, outfile):
 			output = []
 			output.append(str(node))
 			output.append(";".join(node_bipart.bipart_proper))
-			output.append(";".join(conflict[1][0]))
+                        output.append(";".join(conflict[1][0].ortholog_bipart))
+                        
+                        # Alternative conflicts should be included where they exist.
+                        if conflict[1][0].alt_conflict:
+                                alternatives = []
+                                alternatives.append(";".join(sorted(conflict[1][0].alt_conflict)))
+                                for i in conflict[1]:
+                                        include = False
+                                        for j in alternatives:
+                                                if i.alt_conflict:
+                                                        if ";".join(sorted(i.alt_conflict)) != j:
+                                                                include = True
+                                        if include:
+                                                alternatives.append(";".join(sorted(i.alt_conflict)))
+                                output.append(" : ".join(alternatives))
+                        else:
+                                output.append("")
 			output.append(str(how_common))
 			output.append(str(percent))
 			string = ",".join(output) + "\n"
