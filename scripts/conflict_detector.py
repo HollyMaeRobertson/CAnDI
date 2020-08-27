@@ -265,8 +265,6 @@ that bipart."
 			sys.exit()
 
 		# We need these for later.
-		total_conflicts = []
-		total_concordances = []
 		concordant_files = []
 
 		# Putting the query into a form comp_biparts likes.
@@ -284,6 +282,7 @@ that bipart."
 		file_list = os.listdir(homologs_folder)
 		
 		for filename in file_list:
+                        total_concordances = []
 			sys.stderr.write("processing " + str(filename) + '\r')
 
 			# Building a tree and making subtrees.
@@ -297,11 +296,14 @@ that bipart."
 			# Looking for concordances in the subtrees.
 			outfile = gene_folder[:-1] + "_comp.log"
 			for tree in trees:
-				conflicts, concordances = comparisons.compare_trees([query], query_name_array , tree, mode, outfile, cutoff)
+				concordances = []
+                                conflicts, concordances = comparisons.compare_trees([query], query_name_array , tree, mode, outfile, cutoff)
+                                total_concordances.extend(concordances)
 				
 			# Dealing with the nodes that aren't in subtrees again.
 			tricky_nodes = read_trees.identify_tricky_nodes(gene_root, trees)
 			for node in tricky_nodes:
+                                concordances = []
 				node_bipart = read_trees.postorder3(node)
 				node_bipart_list = [node_bipart]
 				node_name_array = read_trees.postorder3(node)
@@ -331,9 +333,11 @@ that bipart."
 				for rel in rel_list:			
 					if rel.relation == 'concordant':
 						concordances.append(rel)
+
+                                total_concordances.extend(concordances)
 			
 			# We add all files with any concordances to the list.
-			if len(concordances) != 0:
+                        for i in range(len(total_concordances)):
 				concordant_files.append(filename)
 
 		# Printing the list of files concordant.
@@ -341,5 +345,9 @@ that bipart."
 		for file in concordant_files:
 			print str(file)
 
+                number_of_times = len(concordant_files)
+                concordant_set = set(concordant_files)
+                total_files = len(concordant_set)
+
 		# Printing the total length of the list.			
-		print "There are " + str(len(concordant_files)) + " files containing the specified bipart, out of " + str(len(file_list)) + " files in total."
+		print "Relationship " + str(query_bipart) + " appears " + str(number_of_times) + " times in " + str(total_files) + " genes of " + str(len(file_list)) + " total genes."
