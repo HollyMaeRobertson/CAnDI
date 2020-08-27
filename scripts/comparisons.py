@@ -116,7 +116,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 			# (out of 100), here we treat it as a cutoff to decide
 			# whether or not to include these nodes in the analysis.
 			# If the label isn't an integer, we always include it.
-			if str.isdigit(bp1.label):
+                        if str.isdigit(bp1.label):
 				cutoff1 = int(bp1.label)
 			else:
 				cutoff1 = 100

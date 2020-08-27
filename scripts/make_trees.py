@@ -310,11 +310,11 @@ def clear_labels(root):
 	taxon names.
 	"""
 	if root.istip == False:
-		root.label = ''
+		root.label = ""
 
 	for i in root.children:
 		if i.istip == False:
-			i.label = ''
+                        i.label = ""
 
 		clear_labels(i)
 
@@ -344,6 +344,18 @@ def add_zeros(root):
 		if i.istip == False:
                         if i.label == "":
                                 i.label = "0"
-		add_zeros(i)
+		
+                add_zeros(i)
 
-
+def label_uninformative(root):
+        """Replaces all integer labels in a tree with the label 'U'."""
+        if root.istip == False:
+                if str.isdigit(root.label):
+                        root.label = "U"
+        
+        for i in root.children:
+                if i.istip == False:
+                        if str.isdigit(i.label):
+                                i.label = "U"
+                
+                label_uninformative(i)

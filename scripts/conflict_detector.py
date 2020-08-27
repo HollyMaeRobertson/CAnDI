@@ -191,7 +191,6 @@ that bipart."
 		trees = make_trees.subtrees_function(gene_root)
 
 		if len(trees) != 0:
-			make_trees.clear_labels(gene_root)
 			outfile = gene_tree + "_subtree_comp.log"
 			for tree in trees:
 				conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, outfile, cutoff)
@@ -242,6 +241,7 @@ that bipart."
 			make_trees.tree_map2(gene_root, conflicts, 'X')
 			make_trees.tree_map2(gene_root, concordances, '*')
 			make_trees.label_duplications(gene_root)
+                        make_trees.label_uninformative(gene_root)
 			make_trees.add_loci(gene_root)
 			new_tree = gene_root.get_newick_repr(showbl = True)
 			print new_tree + ";"	
@@ -253,6 +253,7 @@ that bipart."
 			make_trees.tree_map2(gene_root, conflicts, 'X')
 			make_trees.tree_map2(gene_root, concordances, '*')
 			make_trees.label_duplications(gene_root)
+                        make_trees.label_uninformative(gene_root)
 			make_trees.add_loci(gene_root)
 			new_tree = gene_root.get_newick_repr(showbl = True)
 			print new_tree + ";"
