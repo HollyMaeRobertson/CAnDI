@@ -74,8 +74,11 @@ that bipart."
 		# Because we do all the work inside this for loop, we use less
 		# memory as we only handle one file at once.
 		file_list = os.listdir(homologs_folder)
+                len_file_list = str(len(file_list))
+                file_no = 0
 		for file in file_list:
-			sys.stderr.write("processing " + str(file) + '\r')
+			file_no += 1
+                        sys.stderr.write("Processing file " + str(file_no) + " of " + len_file_list + ".\r")
 
 			# Building the gene tree. 
 			file_location = str(homologs_folder) + str(file)
