@@ -143,12 +143,9 @@ that bipart."
                                         rel_list = comparisons.comp_biparts(species_biparts, node_biparts, species_name_array, node_name_array, log_name, cutoff, mode)
                                         for rel in rel_list:
                                                 if rel.relation == 'conflict':
-                                                        conflicts.append(rel)
+                                                        total_conflicts.append(rel)
                                                 elif rel.relation == 'concordant':
                                                         total_concordances.append(rel)
-
-                filtered_conflicts = comparisons.filter_conflicts(conflicts)
-                total_conflicts.extend(filtered_conflicts)
                 if not args.no_csv:
                         # Extra analysis to get the relative frequenices of the
                         # conflicts, etc.
