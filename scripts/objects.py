@@ -101,13 +101,13 @@ class Node:
 		self.unique_id = ""
 
 	def add_child(self, child):
-		#make sure that the child is not already in there
+		# make sure that the child is not already in there
 		assert child not in self.children
 		self.children.append(child)
 		child.parent = self
 	
 	def remove_child(self, child):
-		#make sure that the child is in there
+		# make sure that the child is in there
 		assert child in self.children
 		self.children.remove(child)
 		child.parent = None

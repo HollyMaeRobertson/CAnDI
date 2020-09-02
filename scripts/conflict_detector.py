@@ -14,6 +14,7 @@ if __name__ == "__main__":
 	parser.add_argument("--cutoff", type=int, default=80, help="Nodes with a bootstrap label below the cutoff value will not be included in the analysis.")
 	parser.add_argument("--query_bipart", type = str, help="A query to be searched. Required in 's' mode, should be entered in the form: 'taxon1,taxon2', NO SPACES.")
         parser.add_argument("--no_csv", action="store_true", help="Program does not create a .csv file with a more detailed breakdown of the different conflict abundences.")
+        parser.add_argument("--outfile_prefix", type=str, help="Outfile name.")
 	
 	if len(sys.argv) == 1:
 		parser.print_usage()
@@ -45,6 +46,7 @@ that bipart."
 	gene_folder = args.gene_folder
 	gene_tree = args.gene_tree
 	query_bipart = args.query_bipart
+        outfile_prefix = args.outfile_prefix
 	
 	if mode == 'n':
 		# Check we have arguments required.
@@ -96,7 +98,7 @@ that bipart."
 
                                 # This catches *most* of the conflicts and concordances.
                                 for tree in trees:
-                                        conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name.log", cutoff)
+                                        conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
                                         total_concordances.extend(concordances)
                                         
                                         # We only use one conflict per gene (accounting for nesting).
@@ -107,6 +109,7 @@ that bipart."
                                 # tree can be missed by the subtree method, and we need
                                 # to acccount for these.
                                 tricky_nodes = read_trees.identify_tricky_nodes(gene_root, trees)
+                                conflicts = []
                                 for node in tricky_nodes:
                                         node_bipart = read_trees.postorder3(node)
                                         node_biparts = [node_bipart]
@@ -140,9 +143,12 @@ that bipart."
                                         rel_list = comparisons.comp_biparts(species_biparts, node_biparts, species_name_array, node_name_array, log_name, cutoff, mode)
                                         for rel in rel_list:
                                                 if rel.relation == 'conflict':
-                                                        total_conflicts.append(rel)
+                                                        conflicts.append(rel)
                                                 elif rel.relation == 'concordant':
                                                         total_concordances.append(rel)
+
+                filtered_conflicts = comparisons.filter_conflicts(conflicts)
+                total_conflicts.extend(filtered_conflicts)
                 if not args.no_csv:
                         # Extra analysis to get the relative frequenices of the
                         # conflicts, etc.
@@ -150,7 +156,16 @@ that bipart."
                         sorted_conflicts = analysis.sort_conflicts(total_conflicts)
                         analysis.conflict_stats(sorted_conflicts, species_root, outfile)
 
-		# Map concordances and conflicts back onto the tree using the lists
+	        if outfile_prefix:
+                        concord_out = open(str(outfile_prefix) + "_concord.tre", "w")
+                        conflict_out = open(str(outfile_prefix) + "_conflict.tre", "w")
+                        labels_out = open(str(outfile_prefix) + "_labels.tre", "w")
+                else:
+                        concord_out = open("out_concord.tre", "w")
+                        conflict_out = open("out_conflict.tre", "w")
+                        labels_out = open("out_labels.tre", "w")
+                
+                # Map concordances and conflicts back onto the tree using the lists
 		print "\n"
 		make_trees.clear_labels(species_root)
 		make_trees.tree_map(species_root, total_concordances)
@@ -158,6 +173,7 @@ that bipart."
                 concordance_tree = species_root.get_newick_repr(showbl = True)
 		print "Concordance tree: "
 		print concordance_tree + ";"
+                concord_out.write(concordance_tree + ";")
 
 		make_trees.clear_labels(species_root)
 		make_trees.tree_map(species_root, total_conflicts)
@@ -165,6 +181,13 @@ that bipart."
 		conflict_tree = species_root.get_newick_repr(showbl = True)
 		print "Conflict tree:"
 		print conflict_tree + ";"
+                conflict_out.write(conflict_tree + ";")
+
+                make_trees.label_node_ids(species_root)
+                labels_tree = species_root.get_newick_repr(showbl = True)
+                print "Labels tree: "
+                print labels_tree + ";"
+                labels_out.write(labels_tree + ";")
 
         elif mode == "r":
 		# Checking we have the right arguments.
@@ -203,7 +226,7 @@ that bipart."
 			# As in normal mode, there are some nodes missed by the 
 			# subtree method.
 			tricky_nodes = read_trees.identify_tricky_nodes(gene_root, trees)
-			conflicts = []
+                        conflicts = []
 			concordances = []
 
 			for node in tricky_nodes:
@@ -238,17 +261,26 @@ that bipart."
 					if rel.relation == 'conflict':
 						conflicts.append(rel)
 					elif rel.relation == 'concordant':
-						concordances.append(rel)
+						concordances.append(rel) 
 						
 			# Printing the output.
-			make_trees.tree_map2(gene_root, conflicts, 'X')
+    			make_trees.tree_map2(gene_root, conflicts, 'X')
 			make_trees.tree_map2(gene_root, concordances, '*')
 			make_trees.label_duplications(gene_root)
                         make_trees.label_uninformative(gene_root)
 			make_trees.add_loci(gene_root)
 			new_tree = gene_root.get_newick_repr(showbl = True)
-			print new_tree + ";"	
-		
+			#print new_tree + ";"
+                        if outfile_prefix:
+                                out = open(str(outfile_prefix) + "_concon.tre", "w")
+                                labels = open(str(outfile_prefix) + "_labels.tre", "w")
+                        else:
+                                out = open("concon.tre", "w")
+                                labels = open("labels.tre", "w")
+                        out.write(new_tree + ";")
+                        make_trees.label_node_ids(gene_root)
+                        labels_tree = gene_root.get_newick_repr(showbl = True)
+                        labels.write(labels_tree + ";")
 		else:
 			# It's a lot simpler when there are no duplications.
 			outfile = gene_tree + "_comp.log"
@@ -260,6 +292,16 @@ that bipart."
 			make_trees.add_loci(gene_root)
 			new_tree = gene_root.get_newick_repr(showbl = True)
 			print new_tree + ";"
+                        if outfile_prefix:
+                                out = open(str(outfile_prefix) + "_concon.tre", "w")
+                                labels = open(str(outfile_prefix) + "_labels.tre", "w")
+                        else:
+                                out = open("concon.tre", "w")
+                                labels = open("labels.tre", "w")
+                        out.write(new_tree + ";")
+                        make_trees.label_node_ids(gene_root)
+                        labels_tree = gene_root.get_newick_repr(showbl = True)
+                        labels.write(labels_tree + ";")
 
 	elif mode == 's':
 		# Checking arguments.

@@ -359,3 +359,14 @@ def label_uninformative(root):
                                 i.label = "U"
                 
                 label_uninformative(i)
+
+def label_node_ids(root):
+        """Replaces all labels in a tree with their node id."""
+        if root.istip == False:
+                root.label = root.unique_id
+
+        for i in root.children:
+                if i.istip == False:
+                        i.label = i.unique_id
+
+                label_node_ids(i)

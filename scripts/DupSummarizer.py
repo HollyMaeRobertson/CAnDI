@@ -312,7 +312,8 @@ name2 = open(name, "r");
 sp_t = sys.argv[2]
 sp_t2 = open(sp_t,"r")
 
-outw = open(name+".verbose.tsv","w")
+outw = open(name+".dupinfo.tsv","w")
+outw2 = open(name+".treesum.tsv","w")
 
 #Turn species tree into biparts
 for i in sp_t2:
@@ -485,25 +486,34 @@ for i in name2:
 
 	#Get the edge length that proceeds all nodes
 	preorder2(n,Association_HASH)
+	final_tips = []
+	get_tips(n,final_tips)
+	print "Tips\t" + str(len(final_tips))
+	outw2.write("Tips\t" + str(len(final_tips))+"\n")
 
 	dup = ""
 	conf = ""
 	conc = ""
 	un = ""
+	
 	for x in Association_HASH:
 		if x == "D":
 			for i in Association_HASH[x]:
 				dup += "\t" + str(i)
 			print "Duplication\t" + str(len(Association_HASH[x]))
+			outw2.write("Duplication\t" + str(len(Association_HASH[x]))+"\n")
 		elif x == "X":
 			for i in Association_HASH[x]:
 				conf += "\t" + str(i)
 			print "Conflict\t" + str(len(Association_HASH[x]))
+			outw2.write("Conflict\t" + str(len(Association_HASH[x]))+"\n")
 		elif x == "*":
 			for i in Association_HASH[x]:
 				conc += "\t" + str(i)
 			print "Concordance\t" + str(len(Association_HASH[x]))
+			outw2.write("Concordance\t" + str(len(Association_HASH[x]))+"\n")
 		elif x == "U":
 			for i in Association_HASH[x]:
 				un += "\t" + str(i)
 			print "Uninformative\t" + str(len(Association_HASH[x]))
+			outw2.write( "Uninformative\t" + str(len(Association_HASH[x]))+"\n")
