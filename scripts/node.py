@@ -10,20 +10,20 @@ class Node:
         self.istip = False
         self.height = 0
         self.note = ""
-    
-    def add_child(self,child):
-        #make sure that the child is not already in there
+
+    def add_child(self, child):
+        # make sure that the child is not already in there
         assert child not in self.children
         self.children.append(child)
         child.parent = self
-    
-    def remove_child(self,child):
-        #make sure that the child is in there
+
+    def remove_child(self, child):
+        # make sure that the child is in there
         assert child in self.children
         self.children.remove(child)
         child.parent = None
-    
-    def leaves(self,v=None):
+
+    def leaves(self, v=None):
         if v == None:
             v = []
         if len(self.children) == 0:
@@ -34,12 +34,12 @@ class Node:
         return v
 
     def leaves_fancy(self):
-        return [n for n in self.iternodes() if n.istip ]
+        return [n for n in self.iternodes() if n.istip]
 
     def lvsnms(self):
-        return [n.label for n in self.iternodes() if len(n.children) == 0 ]
+        return [n.label for n in self.iternodes() if len(n.children) == 0]
 
-    def iternodes(self,order="preorder"):
+    def iternodes(self, order="preorder"):
         if order.lower() == "preorder":
             yield self
         for child in self.children:
@@ -47,13 +47,13 @@ class Node:
                 yield d
         if order.lower() == "postorder":
             yield self
-    
+
     def prune(self):
         p = self.parent
         if p != None:
             p.remove_child(self)
         return p
-    
+
     def get_newick_repr_paint(self):
         ret = ""
         painted_children = []
@@ -72,7 +72,7 @@ class Node:
             ret += self.label
         return ret
 
-    def get_newick_repr(self,showbl=False):
+    def get_newick_repr(self, showbl=False):
         ret = ""
         for i in range(len(self.children)):
             if i == 0:
