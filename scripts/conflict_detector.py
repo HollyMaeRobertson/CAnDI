@@ -131,16 +131,17 @@ that bipart."
                 	
                 	#make a tree array that will contain all subtrees
                 	trarray = []
-                	trarray.append(g)
+                	#trarray.append(g)
                 	make_trees.subtree_divide(g,trarray)
-                	for x in trarray:
-                		 trees = make_trees.subtrees_function(x)
-                		 for tree in trees:
-							conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
-							total_concordances.extend(concordances)
+                	
+                	
+                	for tree in trarray:
+						
+						conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
+						total_concordances.extend(concordances)
 							
-							filtered_conflicts = comparisons.filter_conflicts(conflicts)
-							total_conflicts.extend(filtered_conflicts)
+						filtered_conflicts = comparisons.filter_conflicts(conflicts)
+						total_conflicts.extend(filtered_conflicts)
                             
                 	
                 	
