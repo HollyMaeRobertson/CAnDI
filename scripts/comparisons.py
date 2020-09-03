@@ -89,6 +89,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
 
     # The 'tree to map back onto' bipartitions.
     for bp1 in tree1:
+
         various_relationships = []
 
         # Make the first bipart to test, removing missing taxa.

@@ -110,25 +110,55 @@ that bipart."
                 # cover the whole gene tree.
                 trees = make_trees.subtrees_function(gene_root)
                 log_name = gene_folder[:-1] + "_subtree_comp.log"
+                
 
                 # This catches *most* of the conflicts and concordances.
-                for tree in trees:
-                    conflicts, concordances = comparisons.compare_trees(
-                        species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
-                    total_concordances.extend(concordances)
+                if len(trees) == 1:
+                    for tree in trees:
+                        conflicts, concordances = comparisons.compare_trees(
+                            species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
+                        total_concordances.extend(concordances)
 
-                    # We only use one conflict per gene (accounting for nesting).
-                    filtered_conflicts = comparisons.filter_conflicts(
-                        conflicts)
-                    total_conflicts.extend(filtered_conflicts)
-
-                # A small number of non-duplication nodes on each gene
-                # tree can be missed by the subtree method, and we need
-                # to acccount for these.
-                tricky_nodes = read_trees.identify_tricky_nodes(
+                        # We only use one conflict per gene (accounting for nesting).
+                        filtered_conflicts = comparisons.filter_conflicts(
+                            conflicts)
+                        total_conflicts.extend(filtered_conflicts)
+                else:
+                	g, g_name = make_trees.build(tree)
+                	#label the duplications
+                	make_trees.label_duplications(g)
+                	#divide into subtrees based on the duplications
+                	
+                	#make a tree array that will contain all subtrees
+                	trarray = []
+                	trarray.append(g)
+                	make_trees.subtree_divide(g,trarray)
+                	for x in trarray:
+                		 trees = make_trees.subtrees_function(x)
+                		 for tree in trees:
+							conflicts, concordances = comparisons.compare_trees(species_biparts, species_name_array, tree, mode, "some_log_name", cutoff)
+							total_concordances.extend(concordances)
+							
+							filtered_conflicts = comparisons.filter_conflicts(conflicts)
+							total_conflicts.extend(filtered_conflicts)
+                            
+                	
+                	
+                	
+                	
+                	
+                	
+                '''
+				# A small number of non-duplication nodes on each gene
+				# tree can be missed by the subtree method, and we need
+				# to acccount for these.
+				tricky_nodes = read_trees.identify_tricky_nodes(
                     gene_root, trees)
                 conflicts = []
+                print "TRICKY"
                 for node in tricky_nodes:
+                    print "HERE"
+                    print node.get_newick_repr()
                     node_bipart = read_trees.postorder3(node)
                     node_biparts = [node_bipart]
                     node_name_array = read_trees.postorder3(node)
@@ -160,11 +190,13 @@ that bipart."
                     log_name = gene_folder[:-1] + "_tricky_nodes_comp.log"
                     rel_list = comparisons.comp_biparts(
                         species_biparts, node_biparts, species_name_array, node_name_array, log_name, cutoff, mode)
+                    
                     for rel in rel_list:
                         if rel.relation == 'conflict':
                             total_conflicts.append(rel)
                         elif rel.relation == 'concordant':
                             total_concordances.append(rel)
+					'''
         if not args.no_csv:
             # Extra analysis to get the relative frequenices of the
             # conflicts, etc.
@@ -240,8 +272,6 @@ that bipart."
                 make_trees.tree_map2(tree, conflicts, "X")
                 make_trees.tree_map2(tree, concordances, "*")
 
-
-           
             # As in normal mode, there are some nodes missed by the
             # subtree method.
             tricky_nodes = read_trees.identify_tricky_nodes(gene_root, trees)
@@ -272,18 +302,18 @@ that bipart."
                             break
                     else:
                         break
-                
+
                 node_name_array.extend(new_names)
-            	outfile = gene_tree + "_tricky_nodes_comp.log"
-            	rel_list = comparisons.comp_biparts(
+                outfile = gene_tree + "_tricky_nodes_comp.log"
+                rel_list = comparisons.comp_biparts(
                     node_bipart_list, species_biparts, node_name_array, species_name_array, outfile, cutoff, mode)
 
-            	for rel in rel_list:
-                	if rel.relation == 'conflict':
-                		conflicts.append(rel)
-                	elif rel.relation == 'concordant':
-						concordances.append(rel)
-			
+                for rel in rel_list:
+                    if rel.relation == 'conflict':
+                        conflicts.append(rel)
+                    elif rel.relation == 'concordant':
+                        concordances.append(rel)
+
             # Printing the output.
             make_trees.tree_map2(gene_root, conflicts, 'X')
             make_trees.tree_map2(gene_root, concordances, '*')

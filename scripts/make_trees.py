@@ -157,6 +157,14 @@ def build(instr):
 
     return root, name_array
 
+def subtree_divide(root,trarray):
+	
+	if root.label == "D":
+		trarray.append(root.children[0])
+		trarray.append(root.children[1])
+	
+	for child in root.children:
+		subtree_divide(child,trarray)
 
 def add_loci(root):
     # Postorder traversal of tree from specified root, changing all tips
