@@ -5,6 +5,7 @@ Nodes, and functions for editing such trees.
 
 from objects import Node, Bipart, Rel
 import read_trees
+import copy
 
 
 def build(instr):
@@ -63,6 +64,7 @@ def build(instr):
                 nextchar = instr[index]
 
             current_node.label = name
+            current_node.sup = name
 
             # We give each node a unique id from the counter, this
             # allows all internal nodes to be easily referenced.
@@ -142,6 +144,7 @@ def build(instr):
                 nextchar = instr[index]
 
             current_node.label = name
+            current_node.sup = name
             name_array.append(name)
             index -= 1
 
@@ -157,14 +160,50 @@ def build(instr):
 
     return root, name_array
 
-def subtree_divide(root,trarray):
+#gets the clade that is the first node before the duplication
+def get_first_before_dup(root,array):
+
+	#make sure this isn't the overall root
+	if root.parent and len(array) == 0:
+		#need the base of the duplication
+		if root.parent.label == "D":
+			get_first_before_dup(root.parent,array)
+		else:
+			nd = Node()
+			if str(root.parent.children[0].get_newick_repr()) == str(root.get_newick_repr()):
+				nd = copy.deepcopy(root.parent.children[1])
+				array.append(nd)
+			else:
+				nd = copy.deepcopy(root.parent.children[0])
+				array.append(nd)
+
+
+#Not a fan of deep copy but this seems to get the job
+#done for now
+def subtree_divide(root,trarray,extra_names):
 	
-	if root.label == "D":
-		trarray.append(root.children[0])
-		trarray.append(root.children[1])
+	if root.label == "D" and root.istip == False:
+		Node1 = Node()
+		Node2 = Node()
+		
+		#need to grab just the clade and make it a polytomy, the tip won't be
+		#analyzed as part of a subtree otherwise
+		array = []
+		name_array = []
+		#get the first clade pre-duplication
+		get_first_before_dup(root,array)
+		if len(array) != 0:
+			name_array = array[0].lvsnms()
+
+		Node1 = copy.deepcopy(root.children[0])
+		Node2 = copy.deepcopy(root.children[1])
+		trarray.append(Node1)
+		trarray.append(Node2)
+		extra_names.append(name_array)
+		extra_names.append(name_array)
 	
 	for child in root.children:
-		subtree_divide(child,trarray)
+		subtree_divide(child,trarray,extra_names)
 
 def add_loci(root):
     # Postorder traversal of tree from specified root, changing all tips
@@ -317,6 +356,54 @@ def tree_map2(tree_root, rel_list, label):
         node = read_trees.node_finder(tree_root, key)
         node.label = label
 
+#Continution the naming scheme
+def tree_map3(tree_root, rel_list, outname, multi_info):
+    """This replaces the labels of each node in a gene tree with the
+    number of times a gene had the relationship
+    """
+    bipart_dict = {}
+    gene_name_dict = {}
+    duplicate = {}
+	
+	#Species node can only informed once per gene tree in this case
+    for bipart in rel_list:
+		gene_name = str(bipart.gene_name)
+		key = str(bipart.species_node)
+		
+		if key in gene_name_dict.keys():
+			if gene_name not in gene_name_dict[key]:
+				gene_name_dict[key].append(gene_name)
+			#This means the single tree has had more than one con* with the relationship
+			else:
+				
+				#make a key that is both the key and gene name
+				tup = (key,gene_name)
+				if tup in duplicate.keys():
+					duplicate[tup].append(gene_name)
+				#This is the first time it is notices to add it multiple times to account
+				#for the first time when it wasn't added
+				else:
+					duplicate[tup] = []
+					duplicate[tup].append(gene_name)
+					duplicate[tup].append(gene_name)
+		else:
+			gene_name_dict[key] = []
+			gene_name_dict[key].append(gene_name)
+
+    outw_multi = open(multi_info, "w")
+    for key in duplicate.keys():
+		outw_multi.write(key[0] + "," + ";".join(duplicate[key])+"\n")
+    outw_multi.close()
+	
+    # Add the numbers to the tree. You would not believe how long it took
+    # me to get this bit to work for what it is. (Haha, been there)
+    outw = open(outname,"w")
+    for key in gene_name_dict.keys():
+    	outw.write(key + "," + ";".join(gene_name_dict[key])+"\n")
+        label = str(len(gene_name_dict[key]))
+        node = read_trees.node_finder(tree_root, key)
+        node.label = label
+    outw.close()
 
 def clear_labels(root):
     """Removes all the labels downstream of the root node specified, except

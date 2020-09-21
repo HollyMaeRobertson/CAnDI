@@ -4,6 +4,7 @@ from objects import Bipart, Rel, Node
 
 import make_trees
 import read_trees
+import sys
 
 
 def unique_array(tree1, tree2):
@@ -59,7 +60,7 @@ def bipart_relationship(bp1, bp2):
         return "conflict"
 
 
-def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode):
+def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode, gene_name):
     """This function takes two lists of biparts (tree1 and tree2), the 
     corresponding lists of names (name_array 1 and 2), the name of a log to
     write out to and the bootstrap cutoff value (we ignore nodes below the 
@@ -71,6 +72,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
     the tree you want to map your relationships back onto. Similarly,
     name_array1 should correspond with tree1 and name_array2 with tree2.
     """
+
 
     # Initialise things.
     relationship_list = []
@@ -121,17 +123,20 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
             # (out of 100), here we treat it as a cutoff to decide
             # whether or not to include these nodes in the analysis.
             # If the label isn't an integer, we always include it.
-            if str.isdigit(bp1.label):
-                cutoff1 = int(bp1.label)
-            else:
-                cutoff1 = 100
+        
+            #if str.isdigit(bp1.label):
+            #    cutoff1 = int(bp1.label)
+            #else:
+           	    #cutoff1 = 100
 
             if str.isdigit(bp2.label):
                 cutoff2 = int(bp2.label)
             else:
                 cutoff2 = 100
 
-            if cutoff1 < cutoff or cutoff2 < cutoff:
+            #Only compare the gene biparts, reverse mode does something a bit different
+            #so avoid that
+            if mode == "n" and cutoff2 < cutoff and cutoff != 0:
                 pass
 
             else:
@@ -142,7 +147,8 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
                 # We only record these two cases.
                 if rel == "conflict" or rel == "concordant":
                     if mode == "n" or mode == "s":
-                        relation = Rel(rel, bp1.unique_id, bp2.unique_id)
+
+                        relation = Rel(rel, bp1.unique_id, bp2.unique_id, gene_name)
                         relation.add_species_bipart(bp1.bipart_proper)
                         relation.add_ortholog_bipart(bp2.bipart_proper)
                     elif mode == "r":
@@ -161,7 +167,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
                         test_bp = list(set(bp.bipart_proper) - set(mis2))
                         if sorted(test_bp) == sorted(test_bp1):
                             new_rel = Rel(
-                                "conflict", bp.unique_id, bp2.unique_id)
+                                "conflict", bp.unique_id, bp2.unique_id, gene_name)
                             new_rel.add_species_bipart(bp.bipart_proper)
                             new_rel.add_ortholog_bipart(bp2.bipart_proper)
                             various_relationships.append(new_rel)
@@ -172,7 +178,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode)
     return relationship_list
 
 
-def compare_trees(species_biparts, species_name_array, subtree, mode, log_name, cutoff):
+def compare_trees(species_biparts, species_name_array, subtree, extra_names, family, mode, log_name, cutoff, gene_name):
     """This function compares a subtree to a species tree which has already	
     been split into biparts.
     """
@@ -185,6 +191,7 @@ def compare_trees(species_biparts, species_name_array, subtree, mode, log_name, 
 
     # We need to add the names that are 'next-door' to this subtree on the
     # overall tree. (Why??? Come back to this when troubleshooting.)
+
     while True:
         parent = current_node.parent
         if parent != None:
@@ -203,16 +210,22 @@ def compare_trees(species_biparts, species_name_array, subtree, mode, log_name, 
     gene_name_array = read_trees.postorder3(subtree)
     gene_name_array = gene_name_array.bipart_proper
     gene_name_array.extend(new_names)
+    
+    #If this is a homolog then the earliest node to not have a duplication must be found
+    if family == "homolog":
+    	gene_name_array.extend(extra_names)
+
+    		
 
     # Actually making the comparisons.
     subtree_biparts = read_trees.postorder2(subtree, subtrees=True)
 
     if mode == "n" or mode == "s":
         rels = comp_biparts(species_biparts, subtree_biparts,
-                            species_name_array, gene_name_array, log_name, cutoff, mode)
+                            species_name_array, gene_name_array, log_name, cutoff, mode, gene_name)
     elif mode == "r":
         rels = comp_biparts(subtree_biparts, species_biparts,
-                            gene_name_array, species_name_array, log_name, cutoff, mode)
+                            gene_name_array, species_name_array, log_name, cutoff, mode, gene_name)
 
     for rel in rels:
         if rel.relation == "conflict":

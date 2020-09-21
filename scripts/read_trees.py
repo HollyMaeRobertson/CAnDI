@@ -45,7 +45,7 @@ def postorder2(root, total_list=None, subtrees=False):
 
     # Making the rest of the bipartitions.
     for child in root.children:
-        if child.children:
+        if child.children and child.label != "CollapsedNotCounted":
             bipart = Bipart(child.label, child.unique_id)
 
             # Other side of the bipartition (for printing output).

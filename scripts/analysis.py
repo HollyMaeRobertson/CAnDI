@@ -64,6 +64,7 @@ def sort_conflicts(conflicts):
 
         complete_dict[key] = conflict_dict
 
+
     return complete_dict
 
 
@@ -76,6 +77,12 @@ def length_of_2nd_entry(a_list):
     else:
         print "not a list!"
 
+def get_gene_names(con):
+
+	genes = ""
+	for i in con:
+		genes += ";" + i.gene_name
+	return genes[1:]
 
 def conflict_stats(conflicts_dict, tree, outfile):
     """This function should take a dictionary from sort_conflicts and 
@@ -97,7 +104,7 @@ def conflict_stats(conflicts_dict, tree, outfile):
             stats_dict[node].append(new_list)
 
     outfile.write(
-        "node_id,species_bipart,ortholog_bipart,alternative_conflicts,number_of_conflicts,percentage\n")
+        "node_id,species_bipart,ortholog_bipart,alternative_conflicts,number_of_conflicts,percentage,genes\n")
 
     for node in stats_dict.keys():
         # Order all the conflicts within each node from most to least
@@ -115,6 +122,7 @@ def conflict_stats(conflicts_dict, tree, outfile):
         cumulative_percent = 0
 
         for conflict in stats_dict[node]:
+            
             how_common = len(conflict[1])
             percent = float(how_common)/total * 100
 
@@ -123,6 +131,7 @@ def conflict_stats(conflicts_dict, tree, outfile):
             output.append(str(node))
             output.append(";".join(node_bipart.bipart_proper))
             output.append(";".join(conflict[1][0].ortholog_bipart))
+
 
             # Alternative conflicts should be included where they exist.
             if conflict[1][0].alt_conflict:
@@ -142,6 +151,12 @@ def conflict_stats(conflicts_dict, tree, outfile):
                 output.append("")
             output.append(str(how_common))
             output.append(str(percent))
+            
+            #get the gene names
+            gene_names_joined = ""
+            gene_names_joined = get_gene_names(conflict[1])
+            output.append(gene_names_joined)
+            	
             string = ",".join(output) + "\n"
             outfile.write(string)
 
