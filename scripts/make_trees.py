@@ -193,7 +193,8 @@ def subtree_divide(root,trarray,extra_names):
 		#get the first clade pre-duplication
 		get_first_before_dup(root,array)
 		if len(array) != 0:
-			name_array = array[0].lvsnms()
+			#this is taxa in the right side of the first clade before the dup
+			name_array = array[0].lvsnms_uniq()
 
 		Node1 = copy.deepcopy(root.children[0])
 		Node2 = copy.deepcopy(root.children[1])

@@ -311,7 +311,11 @@ that bipart."
     	make_trees.subtree_divide(tree_root,trarray,extra_names)
     	trarray.append(tree_root)
     	extra_names.append([])
-    	print extra_names
+    	#print extra_names
+    	
+    	if outfile_subtrees:
+    		tree_to_print = []
+    		out_subs = open(gene_tree+".subtree","w")
     	
     	#parse through the subtrees
     	count = -1
@@ -390,9 +394,9 @@ that bipart."
 					out_mrca = copy.deepcopy(mrca)
 					make_trees.add_loci(out_mrca)
 					if len(extra_names[count]) != 0:
-						print "((" + ",".join(extra_names[count]) + "," + out_mrca.get_newick_repr() + ");"
+						out_subs.write("((" + ",".join(extra_names[count]) + ")," + out_mrca.get_newick_repr() + ");\n")
 					else:
-						print out_mrca.get_newick_repr() + ";"
+						out_subs.write(out_mrca.get_newick_repr() + ";\n")
         #add the loci ID's back on
         make_trees.add_loci(g)
         outw = open(str(outfile_prefix) + "_concon.tre", "w")
