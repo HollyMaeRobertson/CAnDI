@@ -164,7 +164,8 @@ def build(instr):
 def get_first_before_dup(root,array):
 
 	#make sure this isn't the overall root
-	if root.parent and len(array) == 0:
+	if root.parent:
+
 		#need the base of the duplication
 		if root.parent.label == "D":
 			get_first_before_dup(root.parent,array)
@@ -176,6 +177,7 @@ def get_first_before_dup(root,array):
 			else:
 				nd = copy.deepcopy(root.parent.children[0])
 				array.append(nd)
+			get_first_before_dup(root.parent,array)
 
 
 #Not a fan of deep copy but this seems to get the job
@@ -192,10 +194,11 @@ def subtree_divide(root,trarray,extra_names):
 		name_array = []
 		#get the first clade pre-duplication
 		get_first_before_dup(root,array)
+		
 		if len(array) != 0:
-			#this is taxa in the right side of the first clade before the dup
-			name_array = array[0].lvsnms_uniq()
-
+			for i in array:
+				name_array.extend(i.lvsnms_uniq())
+			#name_array = array[0].lvsnms()
 		Node1 = copy.deepcopy(root.children[0])
 		Node2 = copy.deepcopy(root.children[1])
 		trarray.append(Node1)

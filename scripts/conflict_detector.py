@@ -153,7 +153,7 @@ that bipart."
                 	#3) Cut out subtrees based on duplications (e.g left and right of dup)
                 	make_trees.subtree_divide(g, trarray, extra_names)                	
                 	trarray.append(g)
-                	extra_names.append([])
+                	extra_names.append([]) #final tree has all the names anyway
 
                 	#Loop to process all subtrees and the main tree
                 	count = -1
@@ -312,7 +312,6 @@ that bipart."
     	trarray.append(tree_root)
     	extra_names.append([])
     	#print extra_names
-    	
     	if outfile_subtrees:
     		tree_to_print = []
     		out_subs = open(gene_tree+".subtree","w")
@@ -391,7 +390,8 @@ that bipart."
 				
 				#for printing subtrees
 				if outfile_subtrees:
-					out_mrca = copy.deepcopy(mrca)
+					out_mrca = copy.deepcopy(tree)
+					out_mrca.clr_label()
 					make_trees.add_loci(out_mrca)
 					if len(extra_names[count]) != 0:
 						out_subs.write("((" + ",".join(extra_names[count]) + ")," + out_mrca.get_newick_repr() + ");\n")

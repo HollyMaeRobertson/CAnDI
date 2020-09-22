@@ -103,6 +103,13 @@ class Node:
         self.locus = ""
         self.unique_id = ""
 
+    #clears info placed on internal nodes
+    def clr_label(self):
+    
+        if self.istip == False and self.label != "D":
+            self.label = self.sup
+        for child in self.children:
+            child.clr_label()
     
     def get_rid_of_note(self,note):
     
@@ -153,7 +160,7 @@ class Node:
 
         for clade in self.children:
             clade.label_node(rel,sign,cutoff)
-    
+       
     
     #Finds and adds to an mrca node structure the mrca of
     #a list of taxa
