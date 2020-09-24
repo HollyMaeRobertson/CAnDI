@@ -637,10 +637,6 @@ from -r mode and will summarize the results."
     else:
     	print "Mode not found, for options type: python Conflict_detector.py -h"   
    
-   
-    	
-    	
-    	
     		
     '''
     elif mode == "r":
