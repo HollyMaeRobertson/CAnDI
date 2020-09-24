@@ -33,6 +33,7 @@ if __name__ == "__main__":
                         help="Program does not create a .csv file with a more detailed breakdown of the different conflict abundences.")
     parser.add_argument("--outfile_prefix", type=str, default="out", help="Outfile name.")
     parser.add_argument("--output_subtrees", action="store_true", help="Will output subtrees analyzed to a file that has the gene name followed by .subtree")
+    parser.add_argument("--filter_conflict", action="store_true", help="Will filter the alternative conflicts so a gene can only conflict with a species node once")
 
 
     if len(sys.argv) == 1:
@@ -211,6 +212,8 @@ that bipart."
         labels_out = open(str(outfile_prefix) + "_labels.tre", "w")
         concord_gene_out = open(str(outfile_prefix) + "_concord_gene_counts.tre", "w")
         conflict_gene_out = open(str(outfile_prefix) + "_conflict_gene_counts.tre", "w")
+        if cutoff == 0:
+        	nodes_analyzable_out = open(str(outfile_prefix) + "_total_analyzed.tre", "w")
         
 
         # Map concordances and conflicts back onto the tree using the lists
@@ -230,6 +233,17 @@ that bipart."
         print "Conflict tree:"
         print conflict_tree + ";"
         conflict_out.write(conflict_tree + ";")
+        
+        if cutoff == 0:
+            total_rels = []
+            total_rels.extend(total_concordances)
+            total_rels.extend(total_conflicts)
+            make_trees.clear_labels(species_root)
+            make_trees.tree_map(species_root, total_rels)
+            make_trees.add_zeros(species_root)
+            analyzed_tree = species_root.get_newick_repr(showbl=True)
+            nodes_analyzable_out.write(analyzed_tree + ";")
+        	
 
         make_trees.label_node_ids(species_root)
         labels_tree=species_root.get_newick_repr(showbl=True)
@@ -572,7 +586,9 @@ that bipart."
 						if outfile_subtrees:
 							tree.get_rid_of_note("CollapsedNotCounted")
 							printout_filename.append(filename)
-							subtree_printout.append(tree)
+							out_mrca = copy.deepcopy(tree)
+							make_trees.add_loci(out_mrca)
+							subtree_printout.append(out_mrca)
 							names_on_otherside.append(extra_names[count2])
 						
 					
@@ -588,7 +604,8 @@ that bipart."
 			for x in range(0,len(subtree_printout)):
 				tree.get_rid_of_note("CollapsedNotCounted")
 				make_trees.add_loci(tree)
-				t = printout_filename[x] + ": ((" + subtree_printout[x].get_newick_repr(showbl = True) + "," + ",".join(names_on_otherside[x]) + "));"
+				#t = printout_filename[x] + ": ((" + subtree_printout[x].get_newick_repr(showbl = True) + "," + ",".join(names_on_otherside[x]) + "));"
+				t = printout_filename[x] + ": " + subtree_printout[x].get_newick_repr(showbl = True)
 				outw.write(t+"\n")
 			outw.close()
     	

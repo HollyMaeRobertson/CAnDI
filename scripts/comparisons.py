@@ -249,6 +249,7 @@ def filter_conflicts(conflicts):
     # We want to end up with exactly 1 or 0 conflicts for every node present.
     species_nodes = set()
     for conflict in conflicts:
+
         species_nodes.add(conflict.species_node)
     conflicts_to_return = []
 
