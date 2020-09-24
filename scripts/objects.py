@@ -257,6 +257,13 @@ class Node:
     				self.collapse_node(child,"CollapsedNotCounted")
     		child.collapse_dups()
     		
+    def count_label(self,counts):
+    	
+    	if self.istip == False:
+    		counts.append(self.label)
+    	
+    	for child in self.children:
+    		child.count_label(counts)
     
     #Turns the whole tree into a polytomy  
     def collapse(self):

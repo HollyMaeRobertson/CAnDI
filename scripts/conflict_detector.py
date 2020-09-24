@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--species_tree", type=str,
                         help="A file containing the species tree.")
     parser.add_argument(
-        "--mode", type=str, help="The mode that we run the program in. Should be n (normal), r (reverse) or s (search).")
+        "--mode", type=str, help="The mode that we run the program in. Should be n (normal), r (reverse), s (search) or summarize (for analying reverse).")
     parser.add_argument("--gene_tree", type=str,
                         help="File containing a gene tree. Required in 'r' mode.")
     parser.add_argument("--gene_folder", type=str,
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                         help="Program does not create a .csv file with a more detailed breakdown of the different conflict abundences.")
     parser.add_argument("--outfile_prefix", type=str, default="out", help="Outfile name.")
     parser.add_argument("--output_subtrees", action="store_true", help="Will output subtrees analyzed to a file that has the gene name followed by .subtree")
-    parser.add_argument("--filter_conflict", action="store_true", help="Will filter the alternative conflicts so a gene can only conflict with a species node once")
+    parser.add_argument("--annotated_tree", type=str, help="The output of the reverse detector")
 
 
     if len(sys.argv) == 1:
@@ -57,7 +57,8 @@ duplication node with 'D'.\n\n\
 Search mode (specify mode as 's') allows the user to\n\
 search for a specific bipart in a folder of gene trees,\n\
 and returns a list of all the tree files that contain\n\
-that bipart."
+that bipart.\n\nmode summarize takes in the annotated tree\n\
+from -r mode and will summarize the results."
         sys.exit(0)
 
     mode = args.mode
@@ -69,6 +70,7 @@ that bipart."
     outfile_prefix = args.outfile_prefix
     outfile_subtrees = args.output_subtrees
     query_remove = args.query_remove
+    annotated_tree = args.annotated_tree
 
     if mode == 'n':
         # Check we have arguments required.
@@ -616,6 +618,26 @@ that bipart."
 			total_hits += int(final_print_matches[x])
 		outw.close()
 		print "total gene families: " + str(len(final_print_names)) + " total matches: " + str(total_hits) 
+   
+    elif mode == "summarize":
+		if not annotated_tree:
+			print "--annotated_tree is required in this mode."
+			sys.exit(0)
+		file = open(annotated_tree, "r")
+		tree = file.readline()
+		gene_root, gene_name_array = make_trees.build(tree)
+		counts = []
+		possible = ["Duplications","D","Concordances","*","Conflicts","X","Uninformative","U"]
+		gene_root.count_label(counts)
+		for i in range(0,len(possible),2):
+			print possible[i] + ": " + str(counts.count(possible[i+1]))
+		
+    	
+    
+    else:
+    	print "Mode not found, for options type: python Conflict_detector.py -h"   
+   
+   
     	
     	
     	
