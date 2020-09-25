@@ -192,7 +192,7 @@ def subtree_divide(root,trarray,extra_names):
 		#analyzed as part of a subtree otherwise
 		array = []
 		name_array = []
-		#get the first clade pre-duplication
+		#get the outgroup taxa
 		get_first_before_dup(root,array)
 		
 		if len(array) != 0:
@@ -208,6 +208,29 @@ def subtree_divide(root,trarray,extra_names):
 	
 	for child in root.children:
 		subtree_divide(child,trarray,extra_names)
+
+#Repeat of something not a fan of
+def subtree_divide_at_base_of_dup(root,trarray,extra_names):
+	
+	if root.label == "D" and root.istip == False:
+		
+		Node1 = Node()
+		#need to grab just the clade and make it a polytomy, the tip won't be
+		#analyzed as part of a subtree otherwise
+		array = []
+		name_array = []
+		#get the outgroup taxa
+		get_first_before_dup(root,array)
+		if len(array) != 0:
+			for i in array:
+				name_array.extend(i.lvsnms_uniq())
+		Node1 = copy.deepcopy(root)
+		trarray.append(Node1)
+		extra_names.append(name_array)
+	
+	for child in root.children:
+		subtree_divide_at_base_of_dup(child,trarray,extra_names)
+
 
 def add_loci(root):
     # Postorder traversal of tree from specified root, changing all tips

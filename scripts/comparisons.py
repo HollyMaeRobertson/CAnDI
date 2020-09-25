@@ -6,6 +6,16 @@ import make_trees
 import read_trees
 import sys
 
+#In an array of arrays finds the smallest array
+#that has all elements of an array in question
+def get_smallest_match(bipart_array,ingroup):
+	
+	sort_array = []
+	for bipart in bipart_array:
+		if(set(ingroup).issubset(set(bipart))):
+			sort_array.append(bipart)
+	sort_array.sort(key=len)
+	return sort_array[0]
 
 def unique_array(tree1, tree2):
     """This function takes three lists of species names ('array' should be

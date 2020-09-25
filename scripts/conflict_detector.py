@@ -555,19 +555,19 @@ from -r mode and will summarize the results."
 						check =  any(item in query_entered for item in extra_names[count2])
 						if check:
 							pass
+						else:
+							not_in_removable = []
+							not_in_subtree = []
+							not_in_removable,not_in_subtree = comparisons.unique_array(removable,subtree_taxa)
 						
-						not_in_removable = []
-						not_in_subtree = []
-						not_in_removable,not_in_subtree = comparisons.unique_array(removable,subtree_taxa)
+							#print "Subtree list: " + str(subtree_taxa) + "\tRemovable\t" + str(removable) 
+							#print not_in_subtree
 						
-						#print "Subtree list: " + str(subtree_taxa) + "\tRemovable\t" + str(removable) 
-						#print not_in_subtree
+							#3b) remove the ones not in the subtree from the original query to get a new
+							#search list
+							search_list = [x for x in query_entered if x not in not_in_subtree]
 						
-						#3b) remove the ones not in the subtree from the original query to get a new
-						#search list
-						search_list = [x for x in query_entered if x not in not_in_subtree]
-						
-						#print "For searching: " + str(search_list)
+							#print "For searching: " + str(search_list)
 						
 						
 					else:
@@ -631,6 +631,65 @@ from -r mode and will summarize the results."
 		gene_root.count_label(counts)
 		for i in range(0,len(possible),2):
 			print possible[i] + ": " + str(counts.count(possible[i+1]))
+			
+		if query_bipart and species_tree:
+			
+			'''
+			Gonna be a pain but same ideas as above. Tree should already have duplications labeled
+			so its a matter of identifying the subtrees and no collapsing said duplications
+			1) Divide species tree into biparts 2) Divide at the duplication into subtrees 
+			3) get the stats on child 1 and child 2 of each subtree 4) profit
+			The key is the ingroup gives the point of duplication on the species tree (e.g all unique taxa)
+			The outgroup determines if said duplication is concordant with the species tree
+			'''
+			file2 = open(species_tree,"r")
+			sp_tr = file2.readline()
+			#1) divide species tree into biparts
+			bipart_array = []
+			species_root, species_names = make_trees.build(sp_tr)
+			species_root.get_biparts(bipart_array)
+			
+			query_entered = query_bipart.split(",")
+			
+			#2) divide duplications into subtrees
+			trarray = []
+			extra_names = []
+			make_trees.subtree_divide_at_base_of_dup(gene_root,trarray,extra_names)
+			
+			count2 = -1
+			for tree in trarray:
+				count2 += 1
+				
+				if tree.istip == False and tree.label == "D":
+					#print "Here is the tree: " + str(tree.lvsnms_uniq())
+					#print "Here is the names: " + str(extra_names[count2])
+					
+					#First need to check that the query bipart isn't in the extra names
+					#e.g. the query doesn't intersect with outgroups creating conflict
+					check =  any(item in query_entered for item in extra_names[count2])
+					if check:
+						pass
+					else:
+						ingroup = tree.lvsnms_uniq()
+						#print "Ingroup: " + str(ingroup) + " Outgroup: " + str(extra_names[count2])
+						#Get the species tree node the ingroup is associated with (e.g smallest
+						#bipart to have all taxa in it)
+						sp_dup_node = []
+						sp_dup_node = comparisons.get_smallest_match(bipart_array,ingroup)
+						#print "Ingroup: " + str(ingroup) + " duplicated at " + str(sp_dup_node)
+						
+						#The species node matches the query entered, here the analysis can
+						#be conducted
+						if sorted(query_entered) == sorted(sp_dup_node):
+							child1_counts = []
+							child2_counts = []
+							tree.children[0].count_label(child1_counts)
+							tree.children[1].count_label(child2_counts)
+							print str(child1_counts) + " compared to " + str(child2_counts)
+							
+					
+					
+			
 		
     	
     

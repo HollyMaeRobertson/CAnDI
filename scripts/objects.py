@@ -103,6 +103,15 @@ class Node:
         self.locus = ""
         self.unique_id = ""
 
+    def get_biparts(self,bip_array):
+        
+        if self.children:
+			bip_array.append(self.lvsnms())
+        
+        for child in self.children:
+        	child.get_biparts(bip_array)
+    
+    
     #clears info placed on internal nodes
     def clr_label(self):
     
@@ -290,7 +299,6 @@ class Node:
         		main_tree = Node()	
         	child.lvsnms1()
 
-	
 	'''
 	Modified from PyPHLAWD, kink is an extra edge
 	that is left over from removing a child, this removes
