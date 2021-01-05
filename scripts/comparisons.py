@@ -89,7 +89,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode,
     test_bp1 = []
     test_bp2 = []
     rel = ""
-    outf = open(log_name + ".log", "w")
+    #outf = open(log_name + ".log", "w")
     count = 0
 
     # We should get missing taxa to allow us to exclude them later
@@ -152,8 +152,8 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode,
             else:
                 # The relationship between the biparts.
                 rel = bipart_relationship(test_bp1, test_bp2)
-                outf.write(str(rel) + ": " + str(bp1.bipart_proper) +
-                           " | " + str(bp2.bipart_proper) + "\n")
+                #outf.write(str(rel) + ": " + str(bp1.bipart_proper) +
+                #           " | " + str(bp2.bipart_proper) + "\n")
                 # We only record these two cases.
                 if rel == "conflict" or rel == "concordant":
                     if mode == "n" or mode == "s":
