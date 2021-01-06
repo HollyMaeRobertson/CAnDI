@@ -631,8 +631,13 @@ from -r mode and will summarize the results."
 		gene_root.count_label(counts)
 		for i in range(0,len(possible),2):
 			print possible[i] + ": " + str(counts.count(possible[i+1]))
+		print "Total tips: " + str(len(gene_name_array))
 			
 		if query_bipart and species_tree:
+			if outfile_prefix:
+				outfile_sum = open(outfile_prefix + ".tsv", "w")
+			else:
+				outfile_sum = open("summary.tsv", "w")
 			
 			'''
 			Gonna be a pain but same ideas as above. Tree should already have duplications labeled
@@ -657,6 +662,7 @@ from -r mode and will summarize the results."
 			make_trees.subtree_divide_at_base_of_dup(gene_root,trarray,extra_names)
 			
 			count2 = -1
+			outfile_sum.write("LeftTips\tLeftDuplications\tLeftConcord\tLeftConflict\tLeftUninformative\tRightTips\tRightDuplications\tRightConcord\tRightConflict\tRightUninformative\n")
 			for tree in trarray:
 				count2 += 1
 				
@@ -685,10 +691,16 @@ from -r mode and will summarize the results."
 							child2_counts = []
 							tree.children[0].count_label(child1_counts)
 							tree.children[1].count_label(child2_counts)
-							print str(child1_counts) + " compared to " + str(child2_counts)
-							
+							#print "Left side: " + str(len(tree.children[0].lvsnms())) + " Right side: " + str(len(tree.children[1].lvsnms()))
+							#print str(child1_counts) + " compared to " + str(child2_counts)
+							outfile_sum.write(str(len(tree.children[0].lvsnms())) + "\t" + str(child1_counts.count(possible[1])) \
+								+ "\t" + str(child1_counts.count(possible[3])) + "\t" + str(child1_counts.count(possible[5])) \
+								+ "\t" + str(child1_counts.count(possible[7])) + "\t" + str(len(tree.children[1].lvsnms())) \
+								+ "\t" + str(child2_counts.count(possible[1])) + "\t" + str(child2_counts.count(possible[3])) \
+								+ "\t" + str(child2_counts.count(possible[5])) + "\t" + str(child2_counts.count(possible[7])) + "\n") 
 					
-					
+		else:
+			print "For more detailed analysis give species tree and a bipartition of interest"			
 			
 		
     	
