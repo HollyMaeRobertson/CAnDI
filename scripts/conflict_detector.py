@@ -205,7 +205,7 @@ from -r mode and will summarize the results."
         if not args.no_csv:
             # Extra analysis to get the relative frequenices of the
             # conflicts, etc.
-            outfile=open(homologs_folder[:-1] + "_analysis.csv", "w")
+            outfile=open(str(outfile_prefix) + "_analysis.csv", "w")
             sorted_conflicts=analysis.sort_conflicts(total_conflicts)
             analysis.conflict_stats(sorted_conflicts, species_root, outfile)
 

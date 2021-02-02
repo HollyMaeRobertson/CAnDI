@@ -139,6 +139,7 @@ def comp_biparts(tree1, tree2, name_array1, name_array2, log_name, cutoff, mode,
             #else:
            	    #cutoff1 = 100
 
+
             if str.isdigit(bp2.label):
                 cutoff2 = int(bp2.label)
             else:

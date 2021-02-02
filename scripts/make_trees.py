@@ -63,6 +63,14 @@ def build(instr):
                 index += 1
                 nextchar = instr[index]
 
+            #This is to handle floats
+            try:
+                name = float(name)
+                name = int(name)
+                name =  str(name)
+            except ValueError:
+                name = name
+
             current_node.label = name
             current_node.sup = name
 
