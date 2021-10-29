@@ -1,3 +1,4 @@
+# coding: utf-8
 """Key objects for tree traversal.
 
 This module contains the classes Node, Bipart and Rel. Nodes are objects
@@ -121,6 +122,8 @@ class Node:
             child.clr_label()
     
     def get_rid_of_note(self,note):
+    # Replaces a given note (in the form of a string) with "-1" at the given 
+    # node and any downstream nodes. 
     
         if self.label == note:
             self.label = "-1"
@@ -129,7 +132,7 @@ class Node:
     
     
     #searches for an exact match of a bipartition in question
-    def find_bipart(self,bipart_to_find,cutoff,ret_bip):
+    def find_bipart(self, bipart_to_find, cutoff, ret_bip):
         
         #get bipart
         bipart = self.lvsnms()
@@ -148,6 +151,7 @@ class Node:
     
     #Labels nodes as with conflict or a U assuming they are below a certain
     #cutoff
+    # Also labels everything downstream
     def label_node(self,rel,sign,cutoff):
         
         array = []

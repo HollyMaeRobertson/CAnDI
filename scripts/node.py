@@ -40,6 +40,7 @@ class Node:
         return [n.label for n in self.iternodes() if len(n.children) == 0]
 
     def iternodes(self, order="preorder"):
+        # Gets all the descendents of a node? Note recursion.
         if order.lower() == "preorder":
             yield self
         for child in self.children:

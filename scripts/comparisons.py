@@ -257,11 +257,12 @@ def filter_conflicts(conflicts):
     choosing the most upstream place that conflict has ever been recorded on
     both the species and gene trees."""
 
-    # We want to end up with exactly 1 or 0 conflicts for every node present.
+    # We want to end up with exactly 1 or 0 conflicts for every species node 
+    # present. NB this is ok because we're filtering conflicts from a subtree.
     species_nodes = set()
     for conflict in conflicts:
-
         species_nodes.add(conflict.species_node)
+    
     conflicts_to_return = []
 
     for node in species_nodes:
@@ -294,19 +295,32 @@ def best_conflict_machine(current_conflicts, best_conflicts):
     """
     best_conflict = None
     length = 0
+    
+    # Check all the current conflicts.
     for conflict in current_conflicts:
+
+        # 'length' will always be the length of the current 'best conflict'.
         if len(conflict.ortholog_bipart) >= length:
             include_conflict = True
+
+            # If best_conflicts is empty, we'll ignore this part. 
+            # Otherwise, we want to check for an alternative conflict that is
+            # equally valid to the already-discovered best conflict.
             for conflict2 in best_conflicts:
+                
+                # We use the relationship to work out if this conflict is truly
+                # an alternative topology that is equally valid. 
                 rel = bipart_relationship(
                     conflict.ortholog_bipart, conflict2.ortholog_bipart)
                 if rel == "1 nested in 2" \
                         or rel == "2 nested in 1" \
                         or rel == "concordant":
                     include_conflict = False
+
             if include_conflict:
                 best_conflict = conflict
                 length = len(conflict.ortholog_bipart)
+
     return best_conflict
 
 
