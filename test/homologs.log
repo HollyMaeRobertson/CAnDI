@@ -1,9 +1,0 @@
-no_comp: Spol Beta | WPYJ Retr RuprSFB MJM3360 MJM2940 DrolusSFB DrobinSFB MJM1652 Dino NepSFB Neam 90 MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-no_comp: RuprSFB MJM3360 | MJM2940 DrolusSFB DrobinSFB MJM1652 Dino NepSFB Neam  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-concordant: MJM2940 DrolusSFB DrobinSFB MJM1652 Dino NepSFB Neam | RuprSFB MJM3360  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-uninformative: MJM2940 DrolusSFB | DrobinSFB MJM1652 Dino NepSFB Neam  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-1 nested in 2: DrobinSFB MJM1652 Dino NepSFB Neam | MJM2940 DrolusSFB  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-1 nested in 2: DrobinSFB MJM1652 Dino | NepSFB Neam  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-uninformative: MJM1652 Dino |  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-1 nested in 2: NepSFB Neam | DrobinSFB MJM1652 Dino  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99
-2 nested in 1: Spol Beta WPYJ Retr RuprSFB MJM3360 MJM2940 DrolusSFB DrobinSFB MJM1652 Dino NepSFB Neam |  MJM1652 DrobinSFB NepSFB Neam MJM2940 Neam NepSFB MJM2940 NepSFB Neam | 99

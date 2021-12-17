@@ -36,7 +36,8 @@ if __name__ == "__main__":
     parser.add_argument("--outfile_prefix", type=str, default="out", help="A prefix for all of the outfiles produced by the program in whichever mode you run it in. ")
     parser.add_argument("--output_subtrees", action="store_true", help="Will output subtrees analyzed to a file that has the gene name followed by .subtree.")
     parser.add_argument("--annotated_tree", type=str, help="File containing a gene tree labelled by 'r' mode. Required in 'summarize' mode.")
-
+    parser.add_argument("--perfect_concordance", action="store_true", help="If this argument is used in normal mode, the program will give a list of all the trees in the input folder that contain 0 conflicts with the species tree.")
+    parser.add_argument("--perfect_concordance_strict", action="store_true", help="Same as perfect_concordance, except that only gene trees containing every taxon within the species tree will be included.") 
 
     if len(sys.argv) == 1:
         parser.print_usage()
@@ -77,6 +78,13 @@ TEXT]. \n"
     outfile_subtrees = args.output_subtrees # ???
     query_remove = args.query_remove
     annotated_tree = args.annotated_tree
+    
+    # If return perfect concordance strict, we still want to return perfect 
+    # concord.
+    ret_perf_concord = args.perfect_concordance
+    ret_perf_concord_strict = args.perfect_concordance_strict
+    if ret_perf_concord_strict:
+        ret_perf_concord = True
 
     # Mapping conflicts and concordances onto the species tree. 
     if mode == 'n':
@@ -85,6 +93,11 @@ TEXT]. \n"
             print "--species_tree and --gene_folder are required arguments in \
 this mode."
             sys.exit(0)
+
+        # In 'return perfect concordances' mode, we need to initialise a list
+        # to hold the files
+        if ret_perf_concord:
+            perf_concords = []
 
         # Making the species tree.
         tree_file = open(species_tree, "r")
@@ -153,7 +166,16 @@ this mode."
                         # nesting).
                         filtered_conflicts = comparisons.filter_conflicts(
                             conflicts)
+                        
                         total_conflicts.extend(filtered_conflicts)
+                        
+                        # If we're just looking for the perfectly concordant ones
+                        if ret_perf_concord:
+                            if len(filtered_conflicts) != 0:
+                                perfect = False
+                            else:
+                                perfect = True
+
                 else:
                     # Make a second gene tree (copy).
                     g, g_name = make_trees.build(tree)
@@ -170,6 +192,9 @@ this mode."
                     make_trees.subtree_divide(g, trarray, extra_names)                  
                     trarray.append(g)  
                     extra_names.append([]) #final tree has all the names anyway
+
+                    if ret_perf_concord:
+                        perfect = True
 
                     # Processing the subtrees.
                     count = -1
@@ -207,12 +232,41 @@ this mode."
                             filtered_conflicts = comparisons.filter_conflicts(
                             conflicts)
                             total_conflicts.extend(filtered_conflicts)
+                                    
+                            if ret_perf_concord:
+                                if len(filtered_conflicts) != 0:
+                                    perfect = False
                             
                             # Storing the subtrees for output. 
                             if outfile_subtrees:
                                 tree.get_rid_of_note("CollapsedNotCounted")
                                 printout_filename.append(extra_names[count])
                                 subtree_printout.append(tree)
+
+            if ret_perf_concord:
+                
+                # We want the option to filter for only the gene trees that 
+                # contain all the species taxa.
+
+                if ret_perf_concord_strict:
+                    # Get all the taxa for species and gene trees
+                    species_taxa = all_taxa.bipart_proper
+                    species_taxa = set(species_taxa)
+                    gene_taxa = read_trees.postorder3(gene_root)
+                    gene_taxa = gene_taxa.bipart_proper
+                    gene_taxa = set(gene_taxa)
+
+                    # Then compare - we want to only include gene trees that 
+                    # have all the taxa in the species tree.
+                    missing_taxa = species_taxa - gene_taxa
+                    if len(missing_taxa) == 0:
+                        if perfect:
+                            perf_concords.append(file)
+
+                # If filtering not specified it's less complicated
+                else:
+                    if perfect:
+                        perf_concords.append(file)
 
             # Formatting the subtrees for output.
             if outfile_subtrees:
@@ -231,6 +285,14 @@ this mode."
                     # Outputting the subtrees. 
                     outw.write(t+"\n")
                 outw.close()                    
+
+        # If we're just looking for the perfectly concordant files, we don't 
+        # need to do the rest of the analysis.
+        if ret_perf_concord:
+            with open(str(outfile_prefix) + "_perfectly_concordant.tsv", 'w') as f:
+                for i in perf_concords:
+                    f.write(i + "\n")
+            sys.exit(0)
 
         if not args.no_csv:
             # Just writing a more detailed breakdown of the data. 
