@@ -1,6 +1,5 @@
 #Contains the pxlstr functions 
 #Repeats the traversal a lot so possibly could look into fixing that
-import numpy as np
 
 #test
 def back_home(tree,array):
