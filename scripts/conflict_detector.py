@@ -9,6 +9,7 @@ import comparisons
 import analysis
 import make_trees
 import read_trees
+import sortadate
 from objects import Node, Rel, Bipart
 
 if __name__ == "__main__":
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--species_tree", type=str,
                         help="A file containing the species tree. Required in 'n' and 'r' modes. All trees should be in newick format.")
     parser.add_argument(
-        "--mode", type=str, help="The mode that we run the program in. Should be n (normal), r (reverse), s (search) or summarize (for analying reverse).")
+        "--mode", type=str, help="The mode that we run the program in. Should be n (normal), r (reverse), s (search), summarize (for analying reverse) or sortadate (gene filtering, does not remove outgroups).")
     parser.add_argument("--gene_tree", type=str,
                         help="File containing a gene tree. Required in 'r' mode. All trees should be in newick format.")
     parser.add_argument("--gene_folder", type=str,
@@ -759,9 +760,79 @@ mode."
         else:
             print "For more detailed analysis give species tree and a bipartition of interest"          
             
-        
-        
+    #Step1: Get concordance for the orthologs
+    #Step2: Get the RT var
     
+    elif mode == "sortadate":
+		print "Running SortaDate"
+		#outgroups = "Struthio_camelus,Tinamou_guttatus"  #Example outgroups to play with later
+		if not species_tree or not gene_folder:
+			print "--species_tree and --gene_folder are required arguments in \
+this mode."
+			sys.exit(0) 
+        
+        # Making the species tree.
+		tree_file = open(species_tree, "r")
+		for line in tree_file:
+			tree = line
+		species_root, species_name_array = make_trees.build(tree)
+		species_biparts = read_trees.postorder2(species_root)
+		all_taxa = read_trees.postorder3(species_root)
+		species_biparts.append(all_taxa)
+
+        # We need these later.
+		total_concordances = []
+
+        # Making sure the folder name is correct.
+		if gene_folder[-1] == '/':
+			homologs_folder = gene_folder
+		else:
+			homologs_folder = gene_folder + '/'
+
+        # Because we do all the work of counting conflicts inside this for loop,
+        # we use less memory as we only handle one file at once.
+		file_list = os.listdir(homologs_folder)
+		len_file_list = str(len(file_list))
+		file_no = 0
+		sortaout = open(str(outfile_prefix) + "_sorta_date.csv", "w")
+		sortaout.write("Filename,Concordances,Root-Tip-Variance,TreeLength,TotalTips\n")
+
+        
+        #run through all the files
+		for file in file_list:
+
+			file_no += 1
+			sys.stderr.write("Processing file " + str(file_no) +
+                             " of " + len_file_list + ".\r")
+
+            # Building the gene tree.
+			file_location = str(homologs_folder) + str(file)
+			gene_file = open(file_location, "r")
+
+            # Reading the gene_file. Can be one or many lines?
+			for line in gene_file:
+
+				tree = line
+				gene_root, gene_name_array = make_trees.build(tree)
+				
+				#removable = outgroups.split(",")
+				
+				#remove the outgroups
+				#gene_root = sortadate.remove_ogs(gene_root,removable)
+				#gene_root.parent = None
+
+                # This will act on trees with no duplications (orthologs).
+				conflicts, concordances = comparisons.compare_trees(species_biparts,
+					species_name_array,gene_root,[],
+					"ortholog","n","some_log_name",cutoff,str(file))
+				
+				#Get the RT-Var
+				RT_var = sortadate.Get_var(gene_root,gene_name_array)
+				
+				#Get the treelength
+				t_len = sortadate.get_len(gene_root)
+				
+				sortaout.write(str(file)+","+str(len(concordances))+","+str(RT_var)+","+str(t_len)+","+str(len(gene_name_array))+"\n")				
     else:
         print "Mode not found, for options type: python Conflict_detector.py -h"   
  
