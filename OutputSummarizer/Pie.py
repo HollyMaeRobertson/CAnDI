@@ -25,16 +25,17 @@ class newick_string:
         count = 0
         brlen = ""
         while self.pos2 < len(newick):
+            #print(newick[self.pos2])
             while newick[self.pos2] == "(":
                 count += 1
                 self.pos2 += 1
                 name = ""
             if newick[self.pos2 - 1] != ")":
-                while re.match(r"^[A-Za-z0-9@_-]*$", newick[self.pos2]):
+                while re.match(r"^[A-Za-z0-9@\'\._-]*$", newick[self.pos2]):
                     name += newick[self.pos2]
                     self.pos2 += 1
             else:
-                while re.match(r"^[A-Za-z0-9@_-]*$", newick[self.pos2]):
+                while re.match(r"^[A-Za-z0-9@\'\._-]*$", newick[self.pos2]):
                     self.pos2 += 1
             if newick[self.pos2] == ":":
                 brlen = ""
@@ -63,7 +64,7 @@ class newick_string:
                 #This would be the bracket that matches the top
                 if count == 0:
                     label = ""
-                    while re.match(r"^[A-Za-z0-9@_-]*$", newick[self.pos2]):
+                    while re.match(r"^[A-Za-z0-9@\'\._-]*$", newick[self.pos2]):
                         label += newick[self.pos2]
                         self.pos2 += 1
                     if newick[self.pos2] == ":":
