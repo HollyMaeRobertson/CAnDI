@@ -10,6 +10,10 @@ import make_trees
 def postorder3(root, bipart=None):
     """This traverses the entire tree downstream of the specified root node
     and puts the names of all the tips into the list 'bipart'.
+
+    Fun fact: 'postorder3' and 'postorder2# are actually both preorder 
+    traversals. Someday I will fix those names, but today is not that day.
+    -H 
     """
 
     # The bipart should always start empty.
