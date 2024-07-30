@@ -107,7 +107,7 @@ this mode."
         species_root, species_name_array = make_trees.build(tree)
         species_biparts = read_trees.postorder2(species_root)
         all_taxa = read_trees.postorder3(species_root)
-        species_biparts.append(all_taxa)
+        species_biparts.append(all_taxa) # 
 
         # We need these later.
         total_conflicts = []
@@ -126,8 +126,10 @@ this mode."
         file_no = 0
         for file in file_list:
             file_no += 1
+
+			# Progress bar.
             sys.stderr.write("Processing file " + str(file_no) +
-                             " of " + len_file_list + ".\r")
+                             " of " + len_file_list + ".\r") 
 
             # Building the gene tree.
             file_location = str(homologs_folder) + str(file)
@@ -138,7 +140,7 @@ this mode."
             subtree_printout = []
             printout_filename = []
 
-            # Reading the gene_file. Can be one or many lines?
+            # Reading the gene_file. 
             for line in gene_file:
                 tree = line
                 gene_root, gene_name_array = make_trees.build(tree)
@@ -146,6 +148,9 @@ this mode."
                 # We make 'subtrees' to deal with the problem of duplication:
                 # the subtrees will ultimately contain no duplications and cover
                 # the whole gene tree.
+
+				# that was the original plan here but in reality, this effectively checks for duplications.
+				# if there are duplications, we use subtree_divide instead
                 trees = make_trees.subtrees_function(gene_root)
 
                 # This will act on trees with no duplications (orthologs).
