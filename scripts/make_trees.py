@@ -1,6 +1,6 @@
 """This module contains functions for building trees from their newick
 representation into a structure that can be traversed easily, using 
-Nodes, and functions for editing such trees. 
+nodes, and functions for editing such trees. 
 """
 
 from objects import Node, Bipart, Rel
@@ -10,7 +10,7 @@ import copy
 
 def build(instr):
     """This takes in a tree as a string in newick format, then 
-    puts it in a data structure using Nodes that can be easily 
+    puts it in a data structure using nodes that can be easily 
     traversed.
     """
     root = None
@@ -169,16 +169,21 @@ def build(instr):
     return root, name_array
 
 
-#gets the clade that is the first node before the duplication
+# Gets the clade that is the first node before the duplication.
+# this is useful for repeated runs of duplications (see below)
+# you run it starting on a duplication node with an empty array
+# it gives you the entire outgroup of the first node before the duplication
+# i.e. everything that ISN'T in the clade of the node it's run on (it always gets right to the overall root in the end)
+# (not including things that are in duplications, e.g. in a duplication node ABC|BCD it wouldn't catch D as an outgroup to ABC) 
 def get_first_before_dup(root, array):
 
     #make sure this isn't the overall root
     if root.parent:
 
-        #need the base of the duplication
+        #need the base of the duplication 
         if root.parent.label == "D":
             get_first_before_dup(root.parent,array)
-        else:
+        else: # this section catches the sister node of 'root' and appends it to the array 
             nd = Node()
             if str(root.parent.children[0].get_newick_repr()) == str(root.get_newick_repr()):
                 nd = copy.deepcopy(root.parent.children[1])
@@ -191,6 +196,7 @@ def get_first_before_dup(root, array):
 
 #Not a fan of deep copy but this seems to get the job
 #done for now
+# this is the key function for making subtrees
 def subtree_divide(root, trarray, extra_names):
     """This takes the root of a gene tree with labelled duplications and a list
     (trarray) which it fills with every node that is a direct child of a 
@@ -227,6 +233,9 @@ def subtree_divide(root, trarray, extra_names):
         subtree_divide(child, trarray, extra_names)
 
 #Repeat of something not a fan of
+# this function is only used in 'summarize' mode -H
+# it is used for getting the .tsv summary file -H
+# it differs from 'subtree_divide' in that it does not collapse the duplications, I think -H
 def subtree_divide_at_base_of_dup(root, trarray, extra_names):
     
     if root.label == "D" and root.istip == False:
