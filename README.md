@@ -6,7 +6,7 @@ Scripts to investigate gene tree conflict with gene families.
 
 ## Introduction
 
-This repository contains the CAnDI.py program designed to detect conflict using orthologs (orthologous gene trees) or gene families (Homologous gene trees). The program can either map a series of gene trees onto the species tree to identify the amount of conflict the gene trees have, map a species onto a gene tree to investigate where the gene tree has conflict, or search for patterns of conflict. A more detailed description of all the program's features may be found in the [manual](https://github.com/HollyMaeRobertson/CAnDI/blob/master/Manual_6-7.pdf).
+This repository contains the CAnDI.py program designed to detect conflict using orthologs (orthologous gene trees) or gene families (homologous gene trees). The program can either map a series of gene trees onto the species tree to identify the amount of conflict the gene trees have, map a species onto a gene tree to investigate where the gene tree has conflict, or search for patterns of conflict. A more detailed description of all the program's features may be found in the [manual](https://github.com/HollyMaeRobertson/CAnDI/blob/master/Manual_6-7.pdf).
 
 License: GPL https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -31,7 +31,7 @@ Reverse mode only generates one outfile, called out_concon.tre (or equivalent pr
 For more information, run
 ```python2 scripts/CAnDI.py -h``` 
 or 
-```python3 OutputSummarizer/Pie.py -h```
+```python3 OutputSummarizer/Pie.py -h```.
 
 Or, read the manual! 
 
